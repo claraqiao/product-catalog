@@ -1,0 +1,23 @@
+name = "product-catalog-v12"
+main = "worker/index.js"
+compatibility_date = "2026-11-20"
+
+[assets]
+directory = "./site_dist"
+binding = "ASSETS"
+not_found_handling = "404-page"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "product-catalog"
+database_id = "請在 Cloudflare 建立 D1 後填入實際 ID"
+migrations_dir = "migrations"
+
+[[r2_buckets]]
+binding = "IMAGES"
+bucket_name = "product-catalog-images"
+
+# Cloudflare Secrets（不要寫入此檔）：
+# ADMIN_USERNAME
+# ADMIN_PASSWORD_HASH
+# SESSION_SECRET
