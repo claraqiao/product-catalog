@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#243b35">
+<title>產品型錄管理中心</title><link rel="stylesheet" href="/admin/assets/admin.css">
+</head>
+<body>
+<div id="loginView" class="login-wrap">
+  <section class="login-card"><div class="mark">型</div><p class="eyebrow">CATALOG ADMIN</p><h1>產品型錄管理中心</h1><p class="muted">請使用管理者帳號登入</p>
+    <form id="loginForm"><label>管理者帳號<input id="username" autocomplete="username" required value="admin"></label><label>管理密碼<input id="password" type="password" autocomplete="current-password" required placeholder="輸入管理密碼"></label><button class="primary full" type="submit">登入管理中心</button><p id="loginError" class="error" role="alert"></p></form>
+    <p class="tiny">公開型錄訪客不需要登入。請勿將管理密碼提供給他人。</p>
+  </section>
+</div>
+<div id="appView" class="app-shell" hidden>
+  <aside class="sidebar"><div class="side-brand"><span class="mark small">型</span><div><b>產品型錄</b><small>管理中心</small></div></div>
+    <nav id="mainNav"><button class="nav-item active" data-page="dashboard">▦　總覽</button><button class="nav-item" data-page="products">▤　產品管理</button><button class="nav-item" data-page="categories">▧　分類管理</button><button class="nav-item" data-page="photos">▣　照片管理</button><button class="nav-item" data-page="import">⇧　CSV 匯入／匯出</button><button class="nav-item" data-page="publish">◉　預覽與發布</button><button class="nav-item" data-page="backup">⬇　備份與還原</button><button class="nav-item" data-page="settings">⚙　系統設定</button></nav>
+    <div class="side-bottom"><span class="status-dot"></span><span>管理端連線狀態</span><button id="logoutBtn" class="text-btn">登出</button></div>
+  </aside>
+  <main class="main-area"><header class="topbar"><button id="menuBtn" class="icon-btn" aria-label="開啟選單">☰</button><div><span class="eyebrow">CATALOG WORKSPACE</span><h1 id="pageTitle">總覽</h1></div><div class="top-actions"><a class="outline-btn" href="/" target="_blank" rel="noopener">查看公開型錄 ↗</a><span class="avatar">管</span></div></header>
+    <section id="pageContent" class="content"><div class="loading">正在載入管理資料…</div></section>
+    <footer>產品型錄管理中心 <span>・</span> iPad／手機響應式介面</footer>
+  </main>
+</div>
+<div id="modal" class="modal" hidden><div class="modal-panel"><div class="modal-head"><h2 id="modalTitle">新增產品</h2><button id="modalClose" class="icon-btn" aria-label="關閉">×</button></div><div id="modalBody"></div></div></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script src="/admin/assets/admin.js" defer></script>
+</body></html>

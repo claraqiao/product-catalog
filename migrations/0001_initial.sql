@@ -61,3 +61,4 @@ CREATE TABLE IF NOT EXISTS published_catalog(
 CREATE TABLE IF NOT EXISTS published_media(
  image_key TEXT PRIMARY KEY
 );
+
