@@ -1,31 +1,28 @@
 # V1.2 上線前阻擋項目盤點
 
 盤點日期：2026-11-21  
-依據：階段三工作目錄原始碼與本機靜態測試結果。此文件是工程盤點，不代表已部署或已完成驗收。
+最新進度：階段三原始碼已匯入 GitHub，匯入工作流程及其中的語法／建置／既有測試均成功。此文件是工程盤點，不代表已部署或已完成驗收。
 
-## 已確認的基礎檢查
+## 已確認完成
 
-- `node --check worker/index.js`：通過
-- `node --check admin/assets/admin.js`：通過
-- `node --check public/assets/site.js`：通過
-- `node tools/build_assets.mjs`：通過
-- `node tests/check_static.mjs`：通過
-- `node tests/check_backup.mjs`：通過
+- 完整階段三原始碼已由 ZIP 匯入 GitHub 專案根目錄。
+- GitHub Actions「Import catalog source archive」執行成功：解壓、核心檔案檢查、Node 語法檢查、資產建置、靜態測試及備份格式測試均通過。
+- 此次匯入流程已自動移除已匯入的 ZIP，避免原始碼與壓縮檔混放。
+- 既有本地檢查：`node --check worker/index.js`、`node --check admin/assets/admin.js`、`node --check public/assets/site.js`、`node tools/build_assets.mjs`、`node tests/check_static.mjs`、`node tests/check_backup.mjs` 均通過。
 
-以上只代表語法、靜態檔案及既有測試案例通過，不代表 Cloudflare 真實環境、資料安全或 iPad 實機驗收通過。
+以上只代表程式碼匯入、語法、靜態資產及既有測試案例通過，不代表 Cloudflare 真實環境、資料安全或 iPad 實機驗收通過。
 
 ## 阻擋正式上線的項目
 
-1. **完整應用程式原始碼尚未匯入本儲存庫**：目前 GitHub 的 README 與部分支援檔案已建立，但核心 Worker 與管理端程式仍未進入遠端儲存庫。
-2. **Cloudflare 尚未連接及部署**：尚未建立並驗證 Workers、D1、R2 綁定與正式網址。
-3. **備份還原未啟用**：目前可匯出備份及檢查備份格式；Worker 明確回報 `restoreEnabled: false`，覆蓋還原尚未實作／驗證。
-4. **系統設定頁仍是說明頁**：管理端的設定頁目前呼叫簡易提示頁，網站名稱、介紹、品牌色、聯絡方式等尚未完成可操作設定流程。
-5. **實機與容量驗收未完成**：尚未在 iPad／iPhone 真實操作，也未對 2,000 筆產品及大量照片進行遠端壓力測試。
-6. **正式帳號復原及部署回復程序未完成**：不得把目前版本當作可承載正式資料的服務。
+1. **Cloudflare 尚未連接及部署**：尚未建立並驗證 Workers、D1、R2 綁定與正式網址。
+2. **備份還原未啟用**：目前可匯出備份及檢查備份格式；Worker 明確回報 `restoreEnabled: false`，覆蓋還原尚未實作／驗證。
+3. **系統設定頁仍是說明頁**：管理端的設定頁目前呼叫簡易提示頁，網站名稱、介紹、品牌色、聯絡方式等尚未完成可操作設定流程。
+4. **實機與容量驗收未完成**：尚未在 iPad／iPhone 真實操作，也未對 2,000 筆產品及大量照片進行遠端壓力測試。
+5. **正式帳號復原及部署回復程序未完成**：不得把目前版本當作可承載正式資料的服務。
 
 ## 下一階段完成順序
 
-- [ ] 將完整且一致的階段三原始碼逐檔匯入 GitHub，核對檔案數量與雜湊。
+- [x] 將完整且一致的階段三原始碼匯入 GitHub，並由 Actions 驗證核心檔案、建置與既有測試。
 - [ ] 完成設定頁、管理者復原及安全還原流程，並補上自動化測試。
 - [ ] 先在 Cloudflare 免費額度內建立測試環境；任何可能產生費用的選項先停止並取得明確同意。
 - [ ] 驗證登入保護、公開資料隔離、照片上傳／刪除、發布快照及回復。
