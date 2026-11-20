@@ -1,0 +1,13 @@
+{
+  "name": "product-catalog-v12",
+  "private": true,
+  "version": "1.2.0",
+  "type": "module",
+  "scripts": {
+    "build": "node tools/build_assets.mjs",
+    "check": "node tests/check_static.mjs && node tests/check_backup.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}
