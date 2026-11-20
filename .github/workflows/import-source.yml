@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - "*.zip"
+      - ".github/workflows/import-source.yml"
     branches:
       - main
   workflow_dispatch:
