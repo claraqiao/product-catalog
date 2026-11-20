@@ -3,7 +3,7 @@ name: Import catalog source archive
 on:
   push:
     paths:
-      - "source-stage3.zip"
+      - "*.zip"
     branches:
       - main
   workflow_dispatch:
@@ -24,15 +24,20 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -f source-stage3.zip
+          mapfile -t archives < <(find . -maxdepth 1 -type f -name '*.zip' -print)
+          if [ "${#archives[@]}" -ne 1 ]; then
+            echo "Expected exactly one ZIP archive at repository root."
+            exit 1
+          fi
+          archive="${archives[0]}"
           mkdir -p /tmp/catalog-import
-          unzip -q source-stage3.zip -d /tmp/catalog-import
+          unzip -q "$archive" -d /tmp/catalog-import
           test -s /tmp/catalog-import/worker/index.js
           test -s /tmp/catalog-import/admin/index.html
           test -s /tmp/catalog-import/admin/assets/admin.js
           test -s /tmp/catalog-import/migrations/0001_initial.sql
           cp -a /tmp/catalog-import/. .
-          rm source-stage3.zip
+          rm "$archive"
           node --check worker/index.js
           node --check admin/assets/admin.js
           node --check public/assets/site.js
