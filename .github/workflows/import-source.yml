@@ -1,0 +1,55 @@
+name: Import catalog source archive
+
+on:
+  push:
+    paths:
+      - "source-stage3.zip"
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Unpack and verify source archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f source-stage3.zip
+          mkdir -p /tmp/catalog-import
+          unzip -q source-stage3.zip -d /tmp/catalog-import
+          test -s /tmp/catalog-import/worker/index.js
+          test -s /tmp/catalog-import/admin/index.html
+          test -s /tmp/catalog-import/admin/assets/admin.js
+          test -s /tmp/catalog-import/migrations/0001_initial.sql
+          cp -a /tmp/catalog-import/. .
+          rm source-stage3.zip
+          node --check worker/index.js
+          node --check admin/assets/admin.js
+          node --check public/assets/site.js
+          node tools/build_assets.mjs
+          node tests/check_static.mjs
+          node tests/check_backup.mjs
+
+      - name: Commit imported source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No source changes to commit."
+            exit 0
+          fi
+          git commit -m "Import complete V1.2 catalog source"
+          git push
