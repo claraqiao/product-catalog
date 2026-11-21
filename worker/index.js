@@ -37,7 +37,12 @@ function validateBackup(data){
   if(keys.has(im.key))throw Error('備份含有重複的照片檔案：'+im.key);
   keys.add(im.key);
   if(!/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(im.data))throw Error('照片資料不是有效的 Base64：'+im.key);
-  if(base64ToBytes(im.data).length>15*1024*1024)throw Error('單張照片超過允許大小：'+im.key)
+  const bytes=base64ToBytes(im.data);
+  if(!bytes.length||bytes.length>15*1024*1024)throw Error('單張照片大小不正確：'+im.key);
+  if(im.type==='image/jpeg'&&!(bytes[0]===255&&bytes[1]===216&&bytes[2]===255))throw Error('備份照片 JPEG 格式錯誤：'+im.key);
+  if(im.type==='image/png'&&!(bytes[0]===137&&bytes[1]===80&&bytes[2]===78&&bytes[3]===71))throw Error('備份照片 PNG 格式錯誤：'+im.key);
+  if(im.type==='image/webp'&&!(bytes[0]===82&&bytes[1]===73&&bytes[2]===70&&bytes[3]===70&&bytes[8]===87&&bytes[9]===69&&bytes[10]===66&&bytes[11]===80))throw Error('備份照片 WebP 格式錯誤：'+im.key);
+  if(im.key.startsWith('public/')&&im.type!=='image/webp')throw Error('展示照片必須為 WebP：'+im.key)
  }
  for(const row of data.tables.product_images){
   for(const field of ['original_key','display_key','thumb_key']){
