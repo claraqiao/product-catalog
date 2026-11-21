@@ -55,3 +55,7 @@ rejected=false;try{context.validateBackup(duplicateImage)}catch{rejected=true}if
 const sharedImage=make();sharedImage.tables.product_images.push({...sharedImage.tables.product_images[0],id:12});
 rejected=false;try{context.validateBackup(sharedImage)}catch{rejected=true}if(!rejected)throw Error('shared image object keys were accepted');
 console.log('PASS backup validation: duplicate image IDs and reused photo keys rejected');
+
+const privatePublished=make();privatePublished.tables.published_media.push({image_key:keys[0]});
+rejected=false;try{context.validateBackup(privatePublished)}catch{rejected=true}if(!rejected)throw Error('private original photo was accepted as published media');
+console.log('PASS backup validation: published media cannot reference private originals');
