@@ -41,3 +41,8 @@ for(const token of ['visibleCount=80','shown.slice(0,visibleCount)','visibleCoun
 }
 if(!catalogCss.includes('.load-more[hidden]'))throw Error('Missing catalog pagination styling');
 console.log('PASS catalog batches limit initial product DOM to 80');
+
+for(const token of ["'#product='+encodeURIComponent(p.sku)","decodeURIComponent(location.hash.slice(9))","window.addEventListener('popstate',syncProductLink)","window.addEventListener('hashchange',syncProductLink)","filter();syncProductLink();"]){
+ if(!catalog.includes(token))throw Error('Missing shareable product link: '+token);
+}
+console.log('PASS shareable product SKU links and browser navigation');
