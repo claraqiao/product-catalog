@@ -128,3 +128,8 @@ console.log('PASS photo upload prevents duplicate submissions during capacity ch
 const photoBatchLock=admin.slice(admin.indexOf('const batch=[...chosen],failed=[]'),admin.indexOf('async function decodePhoto(file)'));
 if(!photoBatchLock.includes("select.disabled=true;$('#photoFiles').disabled=true")||!photoBatchLock.includes("select.disabled=false;$('#photoFiles').disabled=false"))throw Error('Photo batch must lock and unlock product/file selectors');
 console.log('PASS product and photo selection locked during active batch uploads');
+
+const galleryRefresh=admin.slice(admin.indexOf('async function refreshImages()'),admin.indexOf("$('#photoFiles').addEventListener('change'"));
+if(!galleryRefresh.includes('if(select.value!==pid)return;currentImages=r.images||[]'))throw Error('Stale gallery responses must not overwrite selected product images');
+if(!galleryRefresh.includes("refreshImages().catch(e=>notify('無法載入照片清單：'+e.message))"))throw Error('Gallery change listener must handle loading errors');
+console.log('PASS stale product photo gallery responses ignored and change errors handled');
