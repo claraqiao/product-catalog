@@ -155,3 +155,7 @@ const concurrentPhotoOps=admin.slice(admin.indexOf('let chosen=[],currentImages=
 if(!concurrentPhotoOps.includes('photoBatchPending=false')||concurrentPhotoOps.split('galleryMutationPending||photoBatchPending').length<4)throw Error('Photo mutations and uploads must not overlap');
 if(!concurrentPhotoOps.includes("btn.disabled=false;photoBatchPending=false;return"))throw Error('Photo batch lock must release on early validation failure');
 console.log('PASS photo upload and gallery mutations cannot overlap and early validation unlocks');
+
+const productSwitch=admin.slice(admin.indexOf("select.addEventListener('change',()=>{currentImages=[]"),admin.indexOf("$('#photoFiles').addEventListener('change'"));
+for(const token of ["$('#photoUpload').textContent='確認上傳照片'","$('#photoProgress').style.width='0%'","$('#photoStatus').textContent='請選擇照片後上傳。'"])if(!productSwitch.includes(token))throw Error('Switching products must reset photo upload UI: '+token);
+console.log('PASS switching products resets photo retry label, progress and status');
