@@ -234,3 +234,8 @@ for(const guard of ["requireAdmin(request,env)","b?.confirm!=='COPY_TO_R2'","LIM
 if(migrationApi.includes('DELETE FROM trial_image_objects'))throw Error('R2 migration must never delete D1 originals');
 if(!admin.includes("'/admin/storage/migrate'")||!admin.includes('複製舊照片至 R2'))throw Error('iPad migration UI missing');
 console.log('PASS confirmed non-destructive D1 to R2 migration');
+
+const migrationVerify=healthSource.slice(healthSource.indexOf("if(path==='/api/admin/storage/migration-status'"),healthSource.indexOf("if(path==='/api/admin/bootstrap'"));
+for(const part of ['requireAdmin(request,env)','SHA-256','LIMIT 21','mismatches','nextCursor','hasMore'])if(!migrationVerify.includes(part))throw Error('Migration verification missing '+part);
+if(!admin.includes('核對全部舊照片')||!admin.includes('/admin/storage/migration-status?cursor='))throw Error('iPad migration verification UI missing');
+console.log('PASS paginated SHA-256 verification for legacy photo migration');
