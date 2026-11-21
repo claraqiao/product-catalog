@@ -46,6 +46,7 @@ function validateBackup(data){
  }
  for(const row of data.tables.published_media){
   if(typeof row?.image_key!=='string'||!keys.has(row.image_key))throw Error('備份缺少已發布照片檔案');
+  if(!row.image_key.startsWith('public/'))throw Error('已發布照片不可指向私人原圖');
  }
  const productIds=new Set();for(const row of data.tables.products){if(!Number.isInteger(row?.id)||productIds.has(row.id))throw Error('備份產品編號不正確或重複');productIds.add(row.id)}
  const imageIds=new Set(),assignedKeys=new Set();
