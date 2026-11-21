@@ -218,3 +218,8 @@ const bootstrapHandler=admin.slice(admin.indexOf('async function load()'),admin.
 if(!bootstrapHandler.includes("else{products=[];categories=[];showLogin();")||!bootstrapHandler.includes('管理功能已暫停'))throw Error('Admin bootstrap failure must fail closed');
 if(bootstrapHandler.includes('products=[];categories=[];showApp()'))throw Error('Admin controls must not appear after bootstrap failure');
 console.log('PASS admin bootstrap fails closed on cloud data error');
+
+const storageApiBlock=healthSource.slice(healthSource.indexOf("if(path==='/api/admin/storage'"),healthSource.indexOf("if(path==='/api/admin/bootstrap'"));
+if(!storageApiBlock.includes("storageMode:usingR2?'r2':'d1-trial'")||!storageApiBlock.includes('env.IMAGES.list({cursor,limit:500})'))throw Error('Storage usage must distinguish R2 from D1 trial');
+if(!admin.includes("data.storageMode==='r2'")||!admin.includes('R2 用量及可能費用'))throw Error('Dashboard must distinguish R2 usage and cost');
+console.log('PASS storage reporting distinguishes R2 and D1 trial');
