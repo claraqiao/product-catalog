@@ -19,6 +19,14 @@ for(const file of ['index.html','admin/index.html','admin/assets/admin.js','admi
  if(!fs.readFileSync(source).equals(fs.readFileSync(path.join(root,original))))throw Error('Built asset differs from source: '+file);
  console.log('PASS asset',file);
 }
+for(const page of ['index.html','admin/index.html','password-setup/index.html']){
+ const html=read('site_dist/'+page);
+ for(const match of html.matchAll(/(?:src|href)\s*=\s*["'](\/[^"'?#]+\.(?:css|js))["']/g)){
+  const asset=path.join(root,'site_dist',match[1].slice(1));
+  if(!fs.existsSync(asset)||fs.statSync(asset).size===0)throw Error('Missing linked asset '+match[1]+' in '+page);
+  console.log('PASS linked asset',page,match[1]);
+ }
+}
 for(const file of ['wrangler.toml','wrangler.toml.example']){
  const content=read(file);
  if(/^\s*(ADMIN_PASSWORD_HASH|SESSION_SECRET|CLOUDFLARE_API_TOKEN)\s*=/m.test(content))throw Error('Secret must not be stored in '+file);
