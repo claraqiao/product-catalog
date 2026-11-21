@@ -67,3 +67,8 @@ for(const label of ['aria-label="商品照片檢視"','aria-label="關閉照片"
  if(!homepage.includes(label))throw Error('Missing viewer accessibility label '+label);
 }
 console.log('PASS unavailable product links and accessible photo viewer labels');
+
+for(const token of ["const hasProductHash=location.hash.startsWith('#product=')","if(hasProductHash)count.textContent=","document.querySelector('#share-status').textContent=''"]){
+ if(!catalog.includes(token))throw Error('Missing malformed-link or share-status handling '+token);
+}
+console.log('PASS malformed product hash and stale share status handling');
