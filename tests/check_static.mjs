@@ -250,3 +250,8 @@ if(!freeStorageRoute.includes('remainingBytes:usingR2?null:Math.max(0,limit-used
 if(!freeStorageRoute.includes("env.ALLOW_R2_MIGRATION!=='true'"))throw Error('Potentially billable R2 migration must default to disabled');
 if(!admin.includes('按現有照片檔案平均大小'))throw Error('Free storage capacity estimate missing from iPad UI');
 console.log('PASS free storage capacity estimate and R2 migration opt-in guard');
+
+if(!healthSource.includes("if(path==='/api/admin/backup/manifest'&&method==='GET')")||!healthSource.includes('fullBackupAvailable:!env.IMAGES_R2'))throw Error('Read-only backup manifest missing');
+if(!healthSource.includes("r2MigrationEnabled:env.ALLOW_R2_MIGRATION==='true'"))throw Error('Migration permission flag missing');
+if(!admin.includes('migrate.disabled=!data.r2MigrationEnabled'))throw Error('iPad R2 migration button must default disabled');
+console.log('PASS backup inventory and free-first migration UI');
