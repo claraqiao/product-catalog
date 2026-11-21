@@ -21,7 +21,7 @@ function bytesToBase64(bytes){let out='';for(let i=0;i<bytes.length;i+=0x8000)ou
 function base64ToBytes(value){const raw=atob(value);const out=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)out[i]=raw.charCodeAt(i);return out}
 async function buildBackup(env){
  if(!env.IMAGES)throw Error('照片儲存服務尚未設定');
- if(env.IMAGES_R2){const legacy=await env.DB.prepare('SELECT COUNT(*) AS n FROM trial_image_objects').first();if(Number(legacy?.n||0)>0)throw Error('R2 已啟用但 D1 尚有舊照片；目前備份只會列出 R2 檔案，為避免不完整備份，請先完成舊照片複製及核對');}
+ if(env.IMAGES_R2){const legacy=await env.DB.prepare('SELECT COUNT(*) AS n FROM trial_image_objects').first();if(Number(legacy?.n||0)>0)throw Error('R2 已啟用但 D1 尚有舊照片；目前備份只會列出 R2 檔案，為避免不完整備份，請先完成舊照片複製及核對，並在正式版備份合併功能完成前保留 D1 資料');}
  const names=['categories','products','product_images','publish_revisions','published_catalog','published_media','audit_log','app_settings','photo_upload_requests'];
  const tables={};for(const name of names){const r=await env.DB.prepare(`SELECT * FROM ${name}`).all();tables[name]=r.results||[]}
  const images=[];let cursor;let total=0;
