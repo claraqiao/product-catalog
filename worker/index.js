@@ -44,6 +44,9 @@ function validateBackup(data){
   if(im.type==='image/webp'&&!(bytes[0]===82&&bytes[1]===73&&bytes[2]===70&&bytes[3]===70&&bytes[8]===87&&bytes[9]===69&&bytes[10]===66&&bytes[11]===80))throw Error('備份照片 WebP 格式錯誤：'+im.key);
   if(im.key.startsWith('public/')&&im.type!=='image/webp')throw Error('展示照片必須為 WebP：'+im.key)
  }
+ for(const row of data.tables.published_media){
+  if(typeof row?.image_key!=='string'||!keys.has(row.image_key))throw Error('備份缺少已發布照片檔案');
+ }
  for(const row of data.tables.product_images){
   for(const field of ['original_key','display_key','thumb_key']){
    const key=row?.[field];if(typeof key!=='string'||!keys.has(key))throw Error('備份缺少照片資料對應的檔案：'+field);
