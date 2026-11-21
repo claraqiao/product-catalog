@@ -154,24 +154,20 @@ export default {async fetch(request,env){if(!env.IMAGES&&env.DB)env={...env,IMAG
   if(path==='/api/admin/storage/migration-status'&&method==='GET'){
    if(!await requireAdmin(request,env))return fail('Unauthorized',401);
    if(!env.IMAGES||env.IMAGES_IS_TRIAL)return fail('尚未配置 R2',409);
+   const cursor=url.searchParams.get('cursor')||'';
+   if(cursor.length>512)return fail('游標長度不正確',422);
    const total=await env.DB.prepare('SELECT COUNT(*) AS count FROM trial_image_objects').first();
-   let checked=0,verified=0;const mismatches=[];let cursor='';
-   do{
-    const {results=[]}=await env.DB.prepare('SELECT object_key,size_bytes,data FROM trial_image_objects WHERE object_key>? ORDER BY object_key LIMIT 20').bind(cursor).all();
-    for(const row of results){
-     const source=new Uint8Array(row.data),target=await env.IMAGES.get(row.object_key);
-     checked++;
-     if(!target){mismatches.push({key:row.object_key,reason:'R2 缺少檔案'});continue}
-     const targetBytes=new Uint8Array(await target.arrayBuffer());
-     const digest=async bytes=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))).map(x=>x.toString(16).padStart(2,'0')).join('');
-     if(source.byteLength!==Number(row.size_bytes)||source.byteLength!==targetBytes.byteLength||await digest(source)!==await digest(targetBytes))mismatches.push({key:row.object_key,reason:'照片內容不一致'});
-     else verified++;
-    }
-    cursor=results.at(-1)?.object_key||cursor;
-    if(results.length<20)break;
-    if(checked>=200)return json({complete:false,checked,verified,total:Number(total?.count||0),mismatches,note:'本次僅檢查前 200 個檔案，尚不能宣告全部完成'});
-   }while(true);
-   return json({complete:mismatches.length===0&&verified===Number(total?.count||0),checked,verified,total:Number(total?.count||0),mismatches,note:'只核對照片內容，不會刪除原檔'});
+   const {results=[]}=await env.DB.prepare('SELECT object_key,size_bytes,data FROM trial_image_objects WHERE object_key>? ORDER BY object_key LIMIT 21').bind(cursor).all();
+   const batch=results.slice(0,20),mismatches=[];let verified=0;
+   const digest=async bytes=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))).map(x=>x.toString(16).padStart(2,'0')).join('');
+   for(const row of batch){
+    const source=new Uint8Array(row.data),target=await env.IMAGES.get(row.object_key);
+    if(!target){mismatches.push({key:row.object_key,reason:'R2 缺少檔案'});continue}
+    const targetBytes=new Uint8Array(await target.arrayBuffer());
+    if(source.byteLength!==Number(row.size_bytes)||source.byteLength!==targetBytes.byteLength||await digest(source)!==await digest(targetBytes))mismatches.push({key:row.object_key,reason:'照片內容不一致'});
+    else verified++;
+   }
+   return json({checked:batch.length,verified,total:Number(total?.count||0),mismatches,hasMore:results.length>20,nextCursor:batch.at(-1)?.object_key||cursor,note:'逐批核對照片內容，不會刪除原檔；必須檢查全部批次才能確認完整'});
   }
   if(path==='/api/admin/bootstrap'&&method==='GET'){const s=await getSession(request,env);if(!s)return fail('Unauthorized',401);return json(await bootstrap(env));}
   if(path==='/api/admin/products'&&method==='POST'){if(!await requireAdmin(request,env))return fail('Unauthorized',401);const b=await body(request);if(!b?.sku?.trim()||!b?.name?.trim())return fail('產品編號與名稱必填');const capacity=await env.DB.prepare('SELECT COUNT(*) AS n FROM products').first();if(Number(capacity?.n||0)>=2000)return fail('產品已達 2,000 筆上限，請先整理舊產品',409);const cat=await env.DB.prepare('SELECT id FROM categories WHERE name=?').bind(b.category||'未分類').first();if(!cat)return fail('找不到指定分類');try{const r=await env.DB.prepare(`INSERT INTO products(sku,name,category_id,series,keywords,specification,internal_note,status) VALUES(?,?,?,?,?,?,?,?)`).bind(b.sku.trim(),b.name.trim(),cat.id,b.series||'',b.keywords||'',b.specification||'',b.internal_note||'',b.status==='active'?'active':(b.status==='archived'?'archived':'draft')).run();await env.DB.prepare(`INSERT INTO audit_log(action,entity_type,entity_id,details) VALUES('create','product',?,'新增產品草稿')`).bind(String(r.meta.last_row_id)).run();return json({ok:true,id:r.meta.last_row_id},201)}catch(e){return fail(e.message.includes('UNIQUE')?'此 SKU 已存在': '產品新增失敗',409)}}
