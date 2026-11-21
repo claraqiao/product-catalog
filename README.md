@@ -22,3 +22,7 @@
 部署完成後，可以執行 `node tools/check_live_site.mjs https://product-catalog.clara0189.workers.dev`，檢查首頁、管理頁、健康檢查，以及未登入時管理 API 是否拒絕存取。此指令不登入、不修改資料，也不會部署；成功不代表照片上傳或發布功能已驗收。
 
 若只有 iPad／手機、沒有本機 Node.js，也可在 GitHub 專案的 **Actions → Live catalog smoke test → Run workflow** 手動執行相同的唯讀檢查。這個工作流程**不會部署網站**，且若 Worker 尚未上線會顯示失敗；請勿將失敗解讀為商品資料遭修改。
+
+## 手動部署（尚未執行）
+
+新增 GitHub Actions **Deploy catalog to Cloudflare (manual)**，只在使用者自行進入 Actions、選擇工作流程並輸入 `DEPLOY` 後執行；**不會因 GitHub 程式更新而自動部署**。工作流程使用 GitHub Repository Secrets `CLOUDFLARE_API_TOKEN` 與 `CLOUDFLARE_ACCOUNT_ID`，需事先設定具有 Workers 部署及 D1 權限的 Cloudflare API Token。Token 不應貼入聊天或程式碼。部署工作流程依序執行程式檢查、D1 正式資料庫遷移、Worker 部署、唯讀網站檢查；其中 D1 遷移會修改正式資料庫結構，首次執行前應確認資料庫及備份策略。管理員的三項 Cloudflare Secrets 仍需在 Cloudflare Worker 端獨立設定。工作流程的存在不代表已取得授權、已部署成功或已完成 iPad 驗收。
