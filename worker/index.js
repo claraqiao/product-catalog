@@ -48,7 +48,7 @@ function validateBackup(data){
   if(typeof row?.image_key!=='string'||!keys.has(row.image_key))throw Error('備份缺少已發布照片檔案');
   if(!row.image_key.startsWith('public/'))throw Error('已發布照片不可指向私人原圖');
  }
- const categoryIds=new Set();for(const row of data.tables.categories){if(!Number.isInteger(row?.id)||categoryIds.has(row.id))throw Error('備份分類編號不正確或重複');categoryIds.add(row.id)}
+ const categoryIds=new Set(),categoryNames=new Set();for(const row of data.tables.categories){if(!Number.isInteger(row?.id)||categoryIds.has(row.id))throw Error('備份分類編號不正確或重複');if(typeof row.name!=='string'||!row.name.trim()||categoryNames.has(row.name))throw Error('備份分類名稱不可空白或重複');categoryIds.add(row.id);categoryNames.add(row.name)}
  const categoryParents=new Map(data.tables.categories.map(row=>[row.id,row.parent_id]));
  for(const row of data.tables.categories){if(row.parent_id!=null&&!categoryIds.has(row.parent_id))throw Error('備份分類的上層分類不存在');const visited=new Set();let current=row.id;while(current!=null){if(visited.has(current))throw Error('備份分類存在循環的上層關係：'+row.id);visited.add(current);current=categoryParents.get(current)}}
  const productIds=new Set(),productSkus=new Set();for(const row of data.tables.products){if(!Number.isInteger(row?.id)||productIds.has(row.id))throw Error('備份產品編號不正確或重複');if(typeof row.sku!=='string'||!row.sku.trim()||productSkus.has(row.sku))throw Error('備份產品 SKU 不可空白或重複');if(typeof row.name!=='string'||!row.name.trim())throw Error('備份產品名稱不可空白');if(!categoryIds.has(row.category_id))throw Error('備份產品所屬分類不存在：'+row?.id);productIds.add(row.id);productSkus.add(row.sku)}
