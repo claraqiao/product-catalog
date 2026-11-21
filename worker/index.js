@@ -142,7 +142,8 @@ export default {async fetch(request,env){if(!env.IMAGES&&env.DB)env={...env,IMAG
    if(env.ALLOW_R2_MIGRATION!=='true')return fail('依照不付費原則，R2 搬移預設關閉；未明確同意及設定前不會啟動',403);
    const b=await body(request);
    if(b?.confirm!=='COPY_TO_R2')return fail('必須明確確認 COPY_TO_R2 才能開始複製',422);
-   const cursor=typeof b?.cursor==='string'&&b.cursor.length<512?b.cursor:'';
+   if(b?.cursor!==undefined&&(typeof b.cursor!=='string'||b.cursor.length>512))return fail('搬移游標格式不正確',422);
+   const cursor=b?.cursor||'';
    const {results=[]}=await env.DB.prepare('SELECT object_key,content_type,size_bytes,data FROM trial_image_objects WHERE object_key>? ORDER BY object_key LIMIT 11').bind(cursor).all();
    const batch=results.slice(0,10);let copied=0,already=0;const failures=[];
    for(const row of batch){
