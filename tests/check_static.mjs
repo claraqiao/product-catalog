@@ -120,3 +120,7 @@ console.log('PASS photo deletion keeps pending upload selections and updates pro
 const uploadGuard=admin.slice(admin.indexOf("$('#photoUpload').addEventListener('click'"),admin.indexOf('const btn=',admin.indexOf("$('#photoUpload').addEventListener('click'")));
 if(!uploadGuard.includes('await refreshImages()')||!uploadGuard.includes('currentImages.length+chosen.length>5')||!uploadGuard.includes('無法確認目前照片數量'))throw Error('Photo upload must verify fresh gallery count and fail closed');
 console.log('PASS photo upload checks fresh gallery count and blocks when gallery cannot load');
+
+const batchStart=admin.slice(admin.indexOf("$('#photoUpload').addEventListener('click'"),admin.indexOf('const batch=[...chosen]',admin.indexOf("$('#photoUpload').addEventListener('click'")));
+if(!batchStart.includes('btn.disabled=true;try{await refreshImages()}')||!batchStart.includes('||btn.disabled)return')||!batchStart.includes('btn.disabled=false;return'))throw Error('Photo batch must lock before asynchronous gallery check and unlock on validation failure');
+console.log('PASS photo upload prevents duplicate submissions during capacity checks');
