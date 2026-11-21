@@ -61,3 +61,9 @@ for(const token of ['document.createDocumentFragment()','render(true)','const st
  if(!catalog.includes(token))throw Error('Missing append-only catalog batches: '+token);
 }
 console.log('PASS show-more preserves existing cards and appends only new products');
+
+if(!catalog.includes('找不到這款已公開的商品，可能已下架或連結有誤'))throw Error('Missing unavailable product link notice');
+for(const label of ['aria-label="商品照片檢視"','aria-label="關閉照片"','aria-label="上一張照片"','aria-label="下一張照片"']){
+ if(!homepage.includes(label))throw Error('Missing viewer accessibility label '+label);
+}
+console.log('PASS unavailable product links and accessible photo viewer labels');
