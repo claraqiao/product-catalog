@@ -191,3 +191,8 @@ console.log('PASS photo upload timeout and abort handling');
 
 if(!uploadTransport.includes('d?.ok===true&&d.uploaded===1')||!uploadTransport.includes('伺服器未確認照片已儲存'))throw Error('Upload success must require explicit server acknowledgement');
 console.log('PASS upload success requires confirmed saved photo');
+
+const healthPosition=healthSource.indexOf("if(path==='/api/health'&&method==='GET')");
+const schemaPosition=healthSource.indexOf('if(env.DB)await ensureTrialSchema(env.DB);');
+if(healthPosition<0||schemaPosition<0||healthPosition>schemaPosition)throw Error('Health probe must run before schema auto-initialization');
+console.log('PASS health probe does not initialize database schema');
