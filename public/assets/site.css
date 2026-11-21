@@ -4,3 +4,5 @@
 :root{--brand:#263c53}.brand a,.intro h1{color:var(--brand)}.intro a{display:inline-block;margin-top:8px;color:var(--brand);text-decoration:underline;text-underline-offset:3px}
 
 .brand{display:flex;align-items:center;gap:10px;min-width:0}.brand .site-logo{display:block;width:38px;height:38px;object-fit:contain;flex:none}.brand a{overflow:hidden;text-overflow:ellipsis}
+
+.load-more{display:block;margin:24px auto 32px;padding:12px 24px;border:1px solid var(--brand);border-radius:10px;background:#fff;color:var(--brand);font:inherit;font-weight:650;cursor:pointer}.load-more[hidden]{display:none}.load-more:focus-visible{outline:3px solid var(--brand);outline-offset:3px}
