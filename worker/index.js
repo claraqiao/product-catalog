@@ -186,6 +186,21 @@ export default {async fetch(request,env){if(!env.IMAGES&&env.DB)env={...env,IMAG
   if(path==='/api/admin/bootstrap'&&method==='GET'){const s=await getSession(request,env);if(!s)return fail('Unauthorized',401);return json(await bootstrap(env));}
   if(path==='/api/admin/products'&&method==='POST'){if(!await requireAdmin(request,env))return fail('Unauthorized',401);const b=await body(request);if(!b?.sku?.trim()||!b?.name?.trim())return fail('產品編號與名稱必填');const capacity=await env.DB.prepare('SELECT COUNT(*) AS n FROM products').first();if(Number(capacity?.n||0)>=2000)return fail('產品已達 2,000 筆上限，請先整理舊產品',409);const cat=await env.DB.prepare('SELECT id FROM categories WHERE name=?').bind(b.category||'未分類').first();if(!cat)return fail('找不到指定分類');try{const r=await env.DB.prepare(`INSERT INTO products(sku,name,category_id,series,keywords,specification,internal_note,status) VALUES(?,?,?,?,?,?,?,?)`).bind(b.sku.trim(),b.name.trim(),cat.id,b.series||'',b.keywords||'',b.specification||'',b.internal_note||'',b.status==='active'?'active':(b.status==='archived'?'archived':'draft')).run();await env.DB.prepare(`INSERT INTO audit_log(action,entity_type,entity_id,details) VALUES('create','product',?,'新增產品草稿')`).bind(String(r.meta.last_row_id)).run();return json({ok:true,id:r.meta.last_row_id},201)}catch(e){return fail(e.message.includes('UNIQUE')?'此 SKU 已存在': '產品新增失敗',409)}}
   const productMatch=path.match(/^\/api\/admin\/products\/(\d+)$/);if(productMatch&&method==='PUT'){if(!await requireAdmin(request,env))return fail('Unauthorized',401);const b=await body(request),id=Number(productMatch[1]);if(!b?.name?.trim())return fail('產品名稱必填');const cat=await env.DB.prepare('SELECT id FROM categories WHERE name=?').bind(b.category||'未分類').first();if(!cat)return fail('找不到指定分類');const r=await env.DB.prepare(`UPDATE products SET name=?,category_id=?,series=?,keywords=?,specification=?,internal_note=?,status=?,updated_at=CURRENT_TIMESTAMP WHERE id=?`).bind(b.name.trim(),cat.id,b.series||'',b.keywords||'',b.specification||'',b.internal_note||'',b.status==='active'?'active':(b.status==='archived'?'archived':'draft'),id).run();if(!r.meta.changes)return fail('找不到產品',404);await env.DB.prepare(`INSERT INTO audit_log(action,entity_type,entity_id,details) VALUES('update','product',?,'更新產品草稿')`).bind(String(id)).run();return json({ok:true})}
+  if(path==='/api/admin/photos/audit'&&method==='GET'){
+   if(!await requireAdmin(request,env))return fail('Unauthorized',401);
+   const raw=url.searchParams.get('after')||'0';
+   if(!/^(0|[1-9][0-9]{0,12})$/.test(raw))return fail('檢查進度格式不正確',422);
+   const after=Number(raw);
+   const {results=[]}=await env.DB.prepare('SELECT id,product_id,original_key,display_key,thumb_key FROM product_images WHERE id>? ORDER BY id LIMIT 21').bind(after).all();
+   const batch=results.slice(0,20),missing=[];let checked=0;
+   for(const photo of batch){
+    for(const role of ['original_key','display_key','thumb_key']){
+     const key=photo[role];if(!key)continue;checked++;
+     if(!env.IMAGES||!await env.IMAGES.head(key))missing.push({photoId:photo.id,productId:photo.product_id,role,key});
+    }
+   }
+   return json({photosChecked:batch.length,filesChecked:checked,missing,hasMore:results.length>20,nextAfter:batch.at(-1)?.id||after,note:'逐批檢查商品照片檔案是否存在；只讀取、不刪除任何資料。需核對全部批次。'});
+  }
   if(path==='/api/admin/backup/image-index'&&method==='GET'){
    if(!await requireAdmin(request,env))return fail('Unauthorized',401);
    const cursor=url.searchParams.get('cursor')||'';
