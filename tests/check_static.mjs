@@ -122,7 +122,7 @@ if(!uploadGuard.includes('await refreshImages()')||!uploadGuard.includes('curren
 console.log('PASS photo upload checks fresh gallery count and blocks when gallery cannot load');
 
 const batchStart=admin.slice(admin.indexOf("$('#photoUpload').addEventListener('click'"),admin.indexOf('const batch=[...chosen]',admin.indexOf("$('#photoUpload').addEventListener('click'")));
-if(!batchStart.includes('photoBatchPending=true;btn.disabled=true;try{const fresh=await refreshImages()')||!batchStart.includes('||btn.disabled||galleryMutationPending||photoBatchPending)return')||!batchStart.includes('btn.disabled=false;return'))throw Error('Photo batch must lock before asynchronous gallery check and unlock on validation failure');
+if(!batchStart.includes('photoBatchPending=true;btn.disabled=true;try{const fresh=await refreshImages()')||!batchStart.includes('||btn.disabled||galleryMutationPending||photoBatchPending)return')||!batchStart.includes('btn.disabled=false;photoBatchPending=false;return'))throw Error('Photo batch must lock before asynchronous gallery check and unlock on validation failure');
 console.log('PASS photo upload prevents duplicate submissions during capacity checks');
 
 const photoBatchLock=admin.slice(admin.indexOf('const batch=[...chosen],failed=[]'),admin.indexOf('async function decodePhoto(file)'));
