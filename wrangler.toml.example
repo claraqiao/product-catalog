@@ -1,4 +1,4 @@
-name = "product-catalog-v12"
+name = "product-catalog"
 main = "worker/index.js"
 compatibility_date = "2026-11-20"
 
@@ -13,9 +13,7 @@ database_name = "product-catalog"
 database_id = "請在 Cloudflare 建立 D1 後填入實際 ID"
 migrations_dir = "migrations"
 
-[[r2_buckets]]
-binding = "IMAGES"
-bucket_name = "product-catalog-images"
+# Free trial: images are stored in D1; no R2 subscription required.
 
 # Cloudflare Secrets（不要寫入此檔）：
 # ADMIN_USERNAME
