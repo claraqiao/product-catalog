@@ -138,3 +138,7 @@ const galleryChange=admin.slice(admin.indexOf("select.addEventListener('change',
 if(!galleryChange.includes('正在載入這款商品的照片'))throw Error('Product switch must clear previous photo gallery');
 if(!admin.includes("if(select.value===pid)$('#existingPhotos').innerHTML"))throw Error('Stale gallery errors must not overwrite newly selected product');
 console.log('PASS product switching clears old photos and suppresses stale error overlays');
+
+if(!admin.includes('galleryRequestId=0')||!admin.includes('requestId=++galleryRequestId')||!admin.includes('select.value!==pid||requestId!==galleryRequestId'))throw Error('Photo gallery must ignore out-of-order responses, even for same product');
+if(!admin.includes('if(fresh===false)'))throw Error('Photo upload must reject stale gallery capacity checks');
+console.log('PASS out-of-order gallery requests and stale upload capacity checks are guarded');
