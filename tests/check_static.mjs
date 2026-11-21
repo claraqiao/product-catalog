@@ -174,5 +174,5 @@ if(!postUpload.includes('const refreshed=await refreshImages();if(refreshed!==tr
 console.log('PASS post-upload photo counts require a confirmed gallery refresh');
 
 const readiness=fs.readFileSync(new URL('tools/check_deploy_readiness.mjs',root),'utf8');
-for(const token of ['Built asset differs from source','Missing linked asset','Secret must not be stored in','database_id','Static deployment readiness checks passed'])if(!readiness.includes(token))throw Error('Missing deployment readiness safety check: '+token);
+for(const token of ['Built asset differs from source','Missing linked asset','Duplicate migration number','Invalid migration filename','Secret must not be stored in','database_id','Static deployment readiness checks passed'])if(!readiness.includes(token))throw Error('Missing deployment readiness safety check: '+token);
 console.log('PASS deployment readiness checks cover build parity and secret safety');
