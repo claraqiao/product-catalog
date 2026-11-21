@@ -142,3 +142,7 @@ console.log('PASS product switching clears old photos and suppresses stale error
 if(!admin.includes('galleryRequestId=0')||!admin.includes('requestId=++galleryRequestId')||!admin.includes('select.value!==pid||requestId!==galleryRequestId'))throw Error('Photo gallery must ignore out-of-order responses, even for same product');
 if(!admin.includes('if(fresh===false)'))throw Error('Photo upload must reject stale gallery capacity checks');
 console.log('PASS out-of-order gallery requests and stale upload capacity checks are guarded');
+
+const safeGallery=admin.slice(admin.indexOf('async function refreshImages()'),admin.indexOf("select.addEventListener('change'"));
+if(!safeGallery.includes('src="${esc(im.preview)}"')||!safeGallery.includes('loading="lazy"')||!safeGallery.includes('data-delete-image="${esc(String(im.id))}"'))throw Error('Admin gallery must escape image attributes and lazy-load thumbnails');
+console.log('PASS admin gallery escapes image attributes and lazy-loads thumbnails');
