@@ -172,3 +172,7 @@ console.log('PASS initial gallery errors handled and empty photo files rejected'
 const postUpload=admin.slice(admin.indexOf("const batch=[...chosen],failed=[]"),admin.indexOf('async function decodePhoto(file)'));
 if(!postUpload.includes('const refreshed=await refreshImages();if(refreshed!==true)throw Error(')||!postUpload.includes('照片清單更新失敗，請重新選擇商品確認照片'))throw Error('Photo upload must not trust a stale gallery refresh when updating product counts');
 console.log('PASS post-upload photo counts require a confirmed gallery refresh');
+
+const readiness=fs.readFileSync(new URL('tools/check_deploy_readiness.mjs',root),'utf8');
+for(const token of ['Built asset differs from source','Secret must not be stored in','database_id','Static deployment readiness checks passed'])if(!readiness.includes(token))throw Error('Missing deployment readiness safety check: '+token);
+console.log('PASS deployment readiness checks cover build parity and secret safety');
