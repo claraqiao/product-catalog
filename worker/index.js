@@ -47,7 +47,9 @@ function validateBackup(data){
  for(const row of data.tables.published_media){
   if(typeof row?.image_key!=='string'||!keys.has(row.image_key))throw Error('備份缺少已發布照片檔案');
  }
+ const productIds=new Set();for(const row of data.tables.products){if(!Number.isInteger(row?.id)||productIds.has(row.id))throw Error('備份產品編號不正確或重複');productIds.add(row.id)}
  for(const row of data.tables.product_images){
+  if(!productIds.has(row?.product_id))throw Error('備份照片對應的產品不存在：'+row?.product_id);
   for(const [field,prefix] of [['original_key','private/originals/'],['display_key','public/display/'],['thumb_key','public/thumb/']]){
    const key=row?.[field];if(typeof key!=='string'||!keys.has(key))throw Error('備份缺少照片資料對應的檔案：'+field);
    if(!key.startsWith(prefix+row.product_id+'/'))throw Error('備份照片所屬產品或照片類型不一致：'+field);
