@@ -152,7 +152,7 @@ export default {async fetch(request,env){if(!env.IMAGES&&env.DB)env={...env,IMAG
    const product=await env.DB.prepare('SELECT id FROM products WHERE id=?').bind(pid).first();if(!product)return fail('找不到產品',404);
    const count=await env.DB.prepare('SELECT COUNT(*) AS n FROM product_images WHERE product_id=?').bind(pid).first();if((count?.n||0)>=5)return fail('每款產品最多 5 張展示照片，請先移除舊照片',409);
    if(!['image/jpeg','image/png','image/webp'].includes(o.type)||d.type!=='image/webp'||t.type!=='image/webp')return fail('僅支援 JPG、PNG、WebP，展示圖必須為 WebP');
-   if(o.size>15*1024*1024||d.size>3*1024*1024||t.size>500*1024)return fail('照片大小超出限制');
+   if(o.size>512*1024||d.size>512*1024||t.size>512*1024)return fail('免費測試版每張原圖、展示圖及縮圖都不可超過 512 KiB，請先壓縮照片',413);
    if(!await validImage(o,o.type)||!await validImage(d,'image/webp')||!await validImage(t,'image/webp'))return fail('照片內容與檔案格式不符或檔案已損毀');
    const id=crypto.randomUUID(),ext=o.type==='image/png'?'png':(o.type==='image/webp'?'webp':'jpg'),okey=`private/originals/${pid}/${id}.${ext}`,dkey=`public/display/${pid}/${id}.webp`,tkey=`public/thumb/${pid}/${id}.webp`;
    try{
