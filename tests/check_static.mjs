@@ -201,3 +201,7 @@ const healthBlock=healthSource.slice(healthSource.indexOf("if(path==='/api/healt
 for(const table of ['categories','products','product_images','publish_revisions','audit_log','app_settings','admin_rate_limits','published_catalog','published_media','photo_upload_requests','trial_image_objects'])if(!healthBlock.includes("'"+table+"'"))throw Error('Health check missing required table: '+table);
 if(!healthBlock.includes('required.some(name=>!existing.has(name))'))throw Error('Health check must reject missing D1 tables');
 console.log('PASS health check covers every catalog D1 table');
+
+const backupExportBlock=healthSource.slice(healthSource.indexOf("if(path==='/api/admin/backup/export'"),healthSource.indexOf("if(path==='/api/admin/backup/inspect'"));
+if(!backupExportBlock.includes('const backup=await buildBackup(env);validateBackup(backup);'))throw Error('Backup export must validate contents before download');
+console.log('PASS backup export checks integrity before download');
