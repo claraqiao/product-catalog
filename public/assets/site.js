@@ -8,6 +8,9 @@
    const title=typeof settings.site_name==='string'?settings.site_name.trim():'';
    if(title){document.title=title;document.querySelector('.brand a').textContent=title;document.querySelector('.intro h1').textContent=title;}
    if(settings.site_description)document.querySelector('.intro p').textContent=settings.site_description;
+   if(typeof settings.logo_url==='string'&&/^https:\/\//i.test(settings.logo_url)){
+    const logo=document.createElement('img');logo.src=settings.logo_url;logo.alt=title?title+' 標誌':'網站標誌';logo.className='site-logo';logo.loading='lazy';logo.referrerPolicy='no-referrer';document.querySelector('.brand').prepend(logo);
+   }
    if(/^#[0-9a-fA-F]{6}$/.test(settings.brand_color||''))document.documentElement.style.setProperty('--brand',settings.brand_color);
    if(settings.noindex==='false')document.querySelector('meta[name="robots"]')?.setAttribute('content','index,follow');
    const url=settings.contact_url;
