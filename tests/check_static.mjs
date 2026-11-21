@@ -223,3 +223,8 @@ const storageApiBlock=healthSource.slice(healthSource.indexOf("if(path==='/api/a
 if(!storageApiBlock.includes("storageMode:usingR2?'r2':'d1-trial'")||!storageApiBlock.includes('env.IMAGES.list({cursor,limit:500})'))throw Error('Storage usage must distinguish R2 from D1 trial');
 if(!admin.includes("data.storageMode==='r2'")||!admin.includes('R2 用量及可能費用'))throw Error('Dashboard must distinguish R2 usage and cost');
 console.log('PASS storage reporting distinguishes R2 and D1 trial');
+
+const storageMigrationBlock=healthSource.slice(healthSource.indexOf("if(path==='/api/admin/storage'"),healthSource.indexOf("if(path==='/api/admin/bootstrap'"));
+if(!storageMigrationBlock.includes('legacyTrialObjects')||!storageMigrationBlock.includes('legacyTrialBytes'))throw Error('R2 storage must report legacy D1 image inventory');
+if(!admin.includes('切換到 R2 不會自動搬移'))throw Error('Admin must warn against silent D1 photo loss during R2 migration');
+console.log('PASS legacy D1 photos are disclosed before R2 migration');
