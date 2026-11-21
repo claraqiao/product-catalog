@@ -67,3 +67,9 @@ rejected=false;try{context.validateBackup(duplicateCategory)}catch{rejected=true
 const missingParent=make();missingParent.tables.categories[0].parent_id=99;
 rejected=false;try{context.validateBackup(missingParent)}catch{rejected=true}if(!rejected)throw Error('missing parent category was accepted');
 console.log('PASS backup validation: product categories, parent categories and duplicate IDs');
+
+const selfParent=make();selfParent.tables.categories[0].parent_id=3;
+rejected=false;try{context.validateBackup(selfParent)}catch{rejected=true}if(!rejected)throw Error('self-referencing category was accepted');
+const cycle=make();cycle.tables.categories.push({id:4,parent_id:3});cycle.tables.categories[0].parent_id=4;
+rejected=false;try{context.validateBackup(cycle)}catch{rejected=true}if(!rejected)throw Error('circular category hierarchy was accepted');
+console.log('PASS backup validation: category cycles and self-parent relationships rejected');
