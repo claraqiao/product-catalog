@@ -52,7 +52,7 @@
    chosen=failed;$('#photoFiles').value='';$('#photoList').innerHTML=chosen.length?chosen.map(f=>`<div class="photo-file"><span>⚠</span><div><b>${esc(f.name)}</b><small>尚未成功，可再次按上傳重試</small></div></div>`).join(''):'尚未選擇照片';
    if(failed.length){$('#photoStatus').textContent=`${batch.length-failed.length} 張成功，${failed.length} 張失敗；按「重新上傳失敗照片」即可只重試失敗項目。`;notify('部分照片未完成，失敗照片已保留')}
    else{$('#photoStatus').textContent=`全部 ${batch.length} 張照片已上傳完成`;notify('照片已全部上傳')}
-   await load();const fresh=$('#photoProduct');if(fresh){fresh.value=pid;fresh.dispatchEvent(new Event('change'))}
+   try{await refreshImages();const current=products.find(p=>String(p.id)===pid);if(current)current.photos=currentImages.length;}catch(e){notify('照片清單更新失敗：'+e.message)}
    btn.textContent=chosen.length?'重新上傳失敗照片':'確認上傳照片';btn.disabled=!chosen.length;
   });
   if(select.value)refreshImages();
