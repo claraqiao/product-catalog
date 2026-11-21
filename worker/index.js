@@ -115,7 +115,18 @@ async function ensureTrialSchema(db) {
  ];
  for(const sql of statements)await db.prepare(sql).run();
 }
-export default {async fetch(request,env){if(!env.IMAGES&&env.DB)env={...env,IMAGES:trialImages(env.DB),IMAGES_IS_TRIAL:true};const url=new URL(request.url),path=url.pathname,method=request.method;
+function imageStoreWithLegacyFallback(r2,db){
+ const legacy=trialImages(db);
+ return {
+  ...r2,
+  put:(...args)=>r2.put(...args),
+  delete:(...args)=>r2.delete(...args),
+  list:(...args)=>r2.list(...args),
+  async get(key){return await r2.get(key)||await legacy.get(key)},
+  async head(key){return await r2.head(key)||await legacy.head(key)}
+ };
+}
+export default {async fetch(request,env){if(!env.IMAGES&&env.DB)env={...env,IMAGES:trialImages(env.DB),IMAGES_IS_TRIAL:true};else if(env.IMAGES&&env.DB)env={...env,IMAGES:imageStoreWithLegacyFallback(env.IMAGES,env.DB)};const url=new URL(request.url),path=url.pathname,method=request.method;
  try{
   if(path==='/api/health'&&method==='GET'){if(!env.DB)return json({ok:false,service:'catalog-api',error:'D1 database binding missing'},503);const required=['categories','products','product_images','publish_revisions','audit_log','app_settings','admin_rate_limits','published_catalog','published_media','photo_upload_requests','trial_image_objects'];const schema=await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table'").all();const existing=new Set((schema.results||[]).map(row=>row.name));if(required.some(name=>!existing.has(name)))return json({ok:false,service:'catalog-api',error:'D1 schema not ready'},503);return json({ok:true,service:'catalog-api'});}
   if(env.DB)await ensureTrialSchema(env.DB);
