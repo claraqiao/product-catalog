@@ -13,3 +13,8 @@ for(const token of ['200*1024*1024','COALESCE(SUM(size_bytes),0)','keep.add(row.
  if(!worker.includes(token))throw Error('Missing free-tier or published-image safety guard: '+token);
  console.log('PASS storage safety:',token);
 }
+
+for(const token of ["series:obj.series||''","CSV 欄位名稱不可重複","產品總數不可超過 2,000 筆","產品已達 2,000 筆上限"]){
+ if(!worker.includes(token))throw Error('Missing catalog import safety: '+token);
+ console.log('PASS CSV and product limits:',token);
+}
