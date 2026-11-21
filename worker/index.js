@@ -164,7 +164,7 @@ export default {async fetch(request,env){if(!env.IMAGES&&env.DB)env={...env,IMAG
      env.DB.prepare("INSERT INTO audit_log(action,entity_type,entity_id,details) VALUES('upload','product',?,'新增產品照片')").bind(String(pid))
     ]);
     return json({ok:true,uploaded:1});
-   }catch(e){await Promise.all([env.IMAGES.delete(okey),env.IMAGES.delete(dkey),env.IMAGES.delete(tkey)]);return fail(e.message||'照片上傳失敗',500)}
+   }catch(e){await Promise.allSettled([env.IMAGES.delete(okey),env.IMAGES.delete(dkey),env.IMAGES.delete(tkey)]);const message=String(e?.message||'照片上傳失敗');const status=/容量已達|單張檔案上限|大小限制|無法壓縮/.test(message)?413:(/照片數量已達上限/.test(message)?409:500);return fail(message,status)}
   }
   const imageListMatch=path.match(/^\/api\/admin\/products\/(\d+)\/images$/);
   if(imageListMatch&&method==='GET'){
