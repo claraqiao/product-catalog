@@ -31,3 +31,9 @@ assert.match(worker,/settingsPending=publicKeys.some/);
 assert.match(worker,/pendingCount:pendingSkus.length\+\(settingsPending\?1:0\)/);
 assert.match(admin,/settingsPending=!!d.settingsPending/);
 console.log('PASS draft settings remain pending until explicit publish');
+
+assert.match(worker,/path==='\\/api\\/admin\\/storage'/);
+assert.match(worker,/paidStorageEnabled:false/);
+assert.match(admin,/async function storageStatus/);
+assert.match(admin,/storageStatus\\(\\)/);
+console.log('PASS authenticated quota reporting and dashboard indicator');
