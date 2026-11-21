@@ -28,3 +28,9 @@ rejected=false;try{context.validateBackup(corrupted)}catch{rejected=true}if(!rej
 const missingPublished=make();missingPublished.tables.published_media.push({image_key:'public/display/7/missing.webp'});
 rejected=false;try{context.validateBackup(missingPublished)}catch{rejected=true}if(!rejected)throw Error('missing published photo was not rejected');
 console.log('PASS backup validation: image signatures and published media references checked');
+
+const oversized=make();oversized.images[0].data=Buffer.concat([Buffer.from([255,216,255]),Buffer.alloc(512*1024)]).toString('base64');
+rejected=false;try{context.validateBackup(oversized)}catch{rejected=true}if(!rejected)throw Error('oversized trial photo was not rejected');
+const tooMany=make();tooMany.tables.product_images=[];tooMany.images=Array.from({length:37},(_,i)=>({key:'private/originals/7/photo'+i+'.jpg',type:'image/jpeg',data:Buffer.concat([Buffer.from([255,216,255]),Buffer.alloc(512*1024-3)]).toString('base64')}));
+rejected=false;try{context.validateBackup(tooMany)}catch{rejected=true}if(!rejected)throw Error('backup exceeding 18 MiB was not rejected');
+console.log('PASS backup validation: trial per-photo and aggregate size limits');
