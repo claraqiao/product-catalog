@@ -1,0 +1,15 @@
+# Cloudflare local credentials and development secrets
+.dev.vars
+.dev.vars.*
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Local build output and dependencies
+site_dist/
+node_modules/
+.wrangler/
+.DS_Store
+*.log
