@@ -38,6 +38,7 @@
   $('#photoFiles').addEventListener('change',e=>{chosen=[...(e.target.files||[])];$('#photoList').innerHTML=chosen.length?chosen.map(f=>`<div class="photo-file"><span>▣</span><div><b>${esc(f.name)}</b><small>${(f.size/1024).toFixed(0)} KB</small></div></div>`).join(''):'尚未選擇照片';$('#photoUpload').disabled=!chosen.length||!select.value});
   $('#photoUpload').addEventListener('click',async()=>{
    const pid=select.value,btn=$('#photoUpload');if(!pid||!chosen.length||btn.disabled||galleryMutationPending||photoBatchPending)return;photoBatchPending=true;btn.disabled=true;select.disabled=true;$('#photoFiles').disabled=true;try{const fresh=await refreshImages();if(fresh!==true){notify('照片清單已更新，請重新確認後再上傳');btn.disabled=false;select.disabled=false;$('#photoFiles').disabled=false;photoBatchPending=false;return}}catch(e){notify('無法確認目前照片數量，請稍後重試：'+e.message);btn.disabled=false;select.disabled=false;$('#photoFiles').disabled=false;photoBatchPending=false;return}if(select.value!==pid){notify('商品已變更，請重新確認照片');btn.disabled=!chosen.length;select.disabled=false;$('#photoFiles').disabled=false;photoBatchPending=false;return}if(currentImages.length+chosen.length>5){notify(`這款商品已有 ${currentImages.length} 張照片，最多只能再上傳 ${Math.max(0,5-currentImages.length)} 張`);btn.disabled=false;select.disabled=false;$('#photoFiles').disabled=false;photoBatchPending=false;return}
+   try{
    const batch=[...chosen],failed=[];$('#photoProgress').style.width='0%';
    for(let i=0;i<batch.length;i++){
     const f=batch[i];$('#photoStatus').textContent=`正在處理第 ${i+1}／${batch.length} 張：${f.name}`;
@@ -54,7 +55,8 @@
    if(failed.length){$('#photoStatus').textContent=`${batch.length-failed.length} 張成功，${failed.length} 張失敗；按「重新上傳失敗照片」即可只重試失敗項目。`;notify('部分照片未完成，失敗照片已保留')}
    else{$('#photoStatus').textContent=`全部 ${batch.length} 張照片已上傳完成`;notify('照片已全部上傳')}
    try{const refreshed=await refreshImages();if(refreshed!==true)throw Error('照片清單未能確認更新');const current=products.find(p=>String(p.id)===pid);if(current)current.photos=currentImages.length;}catch(e){notify('照片清單更新失敗，請重新選擇商品確認照片：'+e.message)}
-   select.disabled=false;$('#photoFiles').disabled=false;btn.textContent=chosen.length?'重新上傳失敗照片':'確認上傳照片';btn.disabled=!chosen.length;photoBatchPending=false;
+   }catch(e){notify('批次上傳處理中斷：'+e.message+'；請重新確認照片清單後重試');$('#photoStatus').textContent='批次處理中斷，請檢查照片清單後重試';}
+   finally{select.disabled=false;$('#photoFiles').disabled=false;btn.textContent=chosen.length?'重新上傳失敗照片':'確認上傳照片';btn.disabled=!chosen.length;photoBatchPending=false;}
   });
   if(select.value)refreshImages().catch(e=>notify('無法載入照片清單：'+e.message));
  }
