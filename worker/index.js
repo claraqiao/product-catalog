@@ -48,11 +48,12 @@ function validateBackup(data){
   if(typeof row?.image_key!=='string'||!keys.has(row.image_key))throw Error('備份缺少已發布照片檔案');
  }
  for(const row of data.tables.product_images){
-  for(const field of ['original_key','display_key','thumb_key']){
+  for(const [field,prefix] of [['original_key','private/originals/'],['display_key','public/display/'],['thumb_key','public/thumb/']]){
    const key=row?.[field];if(typeof key!=='string'||!keys.has(key))throw Error('備份缺少照片資料對應的檔案：'+field);
+   if(!key.startsWith(prefix+row.product_id+'/'))throw Error('備份照片所屬產品或照片類型不一致：'+field);
   }
  }
- return data.summary||{products:data.tables.products.length,categories:data.tables.categories.length,photos:data.tables.product_images.length,imageFiles:data.images.length};
+ return {products:data.tables.products.length,categories:data.tables.categories.length,photos:data.tables.product_images.length,imageFiles:data.images.length,image_bytes:decodedImageBytes,published_revisions:data.tables.publish_revisions.length};
 }
 async function makeSnapshot(env){const {results=[]}=await env.DB.prepare(`SELECT p.id,p.sku,p.name,p.series,p.specification,p.keywords,c.name AS category,i.display_key,i.thumb_key,i.alt_text FROM products p JOIN categories c ON c.id=p.category_id LEFT JOIN product_images i ON i.product_id=p.id WHERE p.status='active' ORDER BY p.sort_order,p.sku,i.sort_order`).all();const map=new Map();for(const r of results){if(!map.has(r.id))map.set(r.id,{sku:r.sku,name:r.name,series:r.series,keywords:r.keywords,category:r.category,specification:r.specification,images:[]});if(r.display_key){if(!r.thumb_key)throw Error('產品 '+r.sku+' 有照片缺少縮圖，請重新處理');map.get(r.id).images.push({src:'/media/'+r.display_key,thumb:'/media/'+r.thumb_key,alt:r.alt_text||r.name,display_key:r.display_key,thumb_key:r.thumb_key})}}const products=[...map.values()];const missing=products.filter(p=>!p.images.length).map(p=>p.sku);if(missing.length)throw Error('以下上架產品尚未加入照片：'+missing.slice(0,30).join('、'));if(products.length&&!env.IMAGES)throw Error('照片儲存服務尚未設定');const keys=products.flatMap(p=>p.images.flatMap(i=>[i.display_key,i.thumb_key]));for(let i=0;i<keys.length;i+=20){const chunk=keys.slice(i,i+20),objects=await Promise.all(chunk.map(k=>env.IMAGES.head(k)));if(objects.some(x=>!x))throw Error('有展示圖或縮圖在儲存服務中不存在，請先修復照片資料')}const settingsRows=await env.DB.prepare('SELECT key,value FROM app_settings').all();const settings=Object.fromEntries((settingsRows.results||[]).filter(x=>['site_name','site_description','brand_color','contact_text','contact_url','logo_url','noindex'].includes(x.key)).map(x=>[x.key,x.value]));return {products,settings,published_at:new Date().toISOString()}}
 // Bounded D1 storage adapter for the no-billing trial.
