@@ -168,3 +168,7 @@ const photoManagerInit=admin.slice(admin.indexOf('async function refreshImages()
 if(!photoManagerInit.includes("if(select.value)refreshImages().catch(e=>notify('無法載入照片清單：'+e.message))"))throw Error('Initial gallery load must handle rejected promises');
 if(!photoManagerInit.includes("if(f.size===0)throw Error('照片檔案是空的，請重新選擇')"))throw Error('Reject zero-byte photos before decoding');
 console.log('PASS initial gallery errors handled and empty photo files rejected');
+
+const postUpload=admin.slice(admin.indexOf("const batch=[...chosen],failed=[]"),admin.indexOf('async function decodePhoto(file)'));
+if(!postUpload.includes('const refreshed=await refreshImages();if(refreshed!==true)throw Error(')||!postUpload.includes('照片清單更新失敗，請重新選擇商品確認照片'))throw Error('Photo upload must not trust a stale gallery refresh when updating product counts');
+console.log('PASS post-upload photo counts require a confirmed gallery refresh');
