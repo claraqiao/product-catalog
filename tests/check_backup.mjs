@@ -9,7 +9,7 @@ const context={base64ToBytes:value=>Uint8Array.from(Buffer.from(value,'base64'))
 vm.createContext(context);
 vm.runInContext(helper+'; this.validateBackup=validateBackup;',context);
 const keys=['private/originals/7/a.jpg','public/display/7/a.webp','public/thumb/7/a.webp'];
-const make=()=>({format:'catalog-v12-backup',version:1,tables:{categories:[],products:[{id:7}],product_images:[{product_id:7,original_key:keys[0],display_key:keys[1],thumb_key:keys[2]}],publish_revisions:[],published_catalog:[],published_media:[],audit_log:[],app_settings:[],photo_upload_requests:[]},images:keys.map((key,i)=>({key,type:i===0?'image/jpeg':'image/webp',data:Buffer.from(i===0?[255,216,255,217]:[82,73,70,70,0,0,0,0,87,69,66,80]).toString('base64')}))});
+const make=()=>({format:'catalog-v12-backup',version:1,tables:{categories:[],products:[{id:7}],product_images:[{id:11,product_id:7,original_key:keys[0],display_key:keys[1],thumb_key:keys[2]}],publish_revisions:[],published_catalog:[],published_media:[],audit_log:[],app_settings:[],photo_upload_requests:[]},images:keys.map((key,i)=>({key,type:i===0?'image/jpeg':'image/webp',data:Buffer.from(i===0?[255,216,255,217]:[82,73,70,70,0,0,0,0,87,69,66,80]).toString('base64')}))});
 const good=make();
 const result=context.validateBackup(good);
 if(result.photos!==1)throw Error('valid backup photo count mismatch');
@@ -49,3 +49,9 @@ rejected=false;try{context.validateBackup(orphan)}catch{rejected=true}if(!reject
 const duplicateProduct=make();duplicateProduct.tables.products.push({id:7});
 rejected=false;try{context.validateBackup(duplicateProduct)}catch{rejected=true}if(!rejected)throw Error('duplicate product ID was accepted');
 console.log('PASS backup validation: orphaned photo and duplicate product IDs rejected');
+
+const duplicateImage=make();duplicateImage.tables.product_images.push({...duplicateImage.tables.product_images[0]});
+rejected=false;try{context.validateBackup(duplicateImage)}catch{rejected=true}if(!rejected)throw Error('duplicate image ID was accepted');
+const sharedImage=make();sharedImage.tables.product_images.push({...sharedImage.tables.product_images[0],id:12});
+rejected=false;try{context.validateBackup(sharedImage)}catch{rejected=true}if(!rejected)throw Error('shared image object keys were accepted');
+console.log('PASS backup validation: duplicate image IDs and reused photo keys rejected');
