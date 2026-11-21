@@ -117,12 +117,12 @@ const deletion=photoManager.slice(photoManager.indexOf("notify('照片已刪除'
 if(!deletion.includes('await refreshImages()')||deletion.includes('await load()'))throw Error('Deleting a photo must not reset pending uploads');
 console.log('PASS photo deletion keeps pending upload selections and updates product photo count');
 
-const uploadGuard=admin.slice(admin.indexOf("$('#photoUpload').addEventListener('click'"),admin.indexOf('const btn=',admin.indexOf("$('#photoUpload').addEventListener('click'")));
+const uploadGuard=admin.slice(admin.indexOf("$('#photoUpload').addEventListener('click'"),admin.indexOf('const batch=[...chosen]',admin.indexOf("$('#photoUpload').addEventListener('click'")));
 if(!uploadGuard.includes('await refreshImages()')||!uploadGuard.includes('currentImages.length+chosen.length>5')||!uploadGuard.includes('無法確認目前照片數量'))throw Error('Photo upload must verify fresh gallery count and fail closed');
 console.log('PASS photo upload checks fresh gallery count and blocks when gallery cannot load');
 
 const batchStart=admin.slice(admin.indexOf("$('#photoUpload').addEventListener('click'"),admin.indexOf('const batch=[...chosen]',admin.indexOf("$('#photoUpload').addEventListener('click'")));
-if(!batchStart.includes('btn.disabled=true;try{await refreshImages()}')||!batchStart.includes('||btn.disabled)return')||!batchStart.includes('btn.disabled=false;return'))throw Error('Photo batch must lock before asynchronous gallery check and unlock on validation failure');
+if(!batchStart.includes('photoBatchPending=true;btn.disabled=true;try{const fresh=await refreshImages()')||!batchStart.includes('||btn.disabled||galleryMutationPending||photoBatchPending)return')||!batchStart.includes('btn.disabled=false;return'))throw Error('Photo batch must lock before asynchronous gallery check and unlock on validation failure');
 console.log('PASS photo upload prevents duplicate submissions during capacity checks');
 
 const photoBatchLock=admin.slice(admin.indexOf('const batch=[...chosen],failed=[]'),admin.indexOf('async function decodePhoto(file)'));
@@ -130,13 +130,13 @@ if(!photoBatchLock.includes("select.disabled=true;$('#photoFiles').disabled=true
 console.log('PASS product and photo selection locked during active batch uploads');
 
 const galleryRefresh=admin.slice(admin.indexOf('async function refreshImages()'),admin.indexOf("$('#photoFiles').addEventListener('change'"));
-if(!galleryRefresh.includes('if(select.value!==pid)return;currentImages=r.images||[]'))throw Error('Stale gallery responses must not overwrite selected product images');
+if(!galleryRefresh.includes('if(select.value!==pid||requestId!==galleryRequestId)return false;currentImages=r.images||[]'))throw Error('Stale gallery responses must not overwrite selected product images');
 if(!galleryRefresh.includes("refreshImages().catch(e=>notify('無法載入照片清單：'+e.message))"))throw Error('Gallery change listener must handle loading errors');
 console.log('PASS stale product photo gallery responses ignored and change errors handled');
 
 const galleryChange=admin.slice(admin.indexOf("select.addEventListener('change',()=>{currentImages=[]"),admin.indexOf("$('#photoFiles').addEventListener('change'"));
 if(!galleryChange.includes('正在載入這款商品的照片'))throw Error('Product switch must clear previous photo gallery');
-if(!admin.includes("if(select.value===pid)$('#existingPhotos').innerHTML"))throw Error('Stale gallery errors must not overwrite newly selected product');
+if(!admin.includes("if(select.value===pid&&requestId===galleryRequestId)$('#existingPhotos').innerHTML"))throw Error('Stale gallery errors must not overwrite newly selected product');
 console.log('PASS product switching clears old photos and suppresses stale error overlays');
 
 if(!admin.includes('galleryRequestId=0')||!admin.includes('requestId=++galleryRequestId')||!admin.includes('select.value!==pid||requestId!==galleryRequestId'))throw Error('Photo gallery must ignore out-of-order responses, even for same product');
@@ -148,7 +148,7 @@ if(!safeGallery.includes('src="${esc(im.preview)}"')||!safeGallery.includes('loa
 console.log('PASS admin gallery escapes image attributes and lazy-loads thumbnails');
 
 const galleryMutations=admin.slice(admin.indexOf('async function refreshImages()'),admin.indexOf("select.addEventListener('change'"));
-if(!admin.includes('galleryMutationPending=false')||galleryMutations.split('if(galleryMutationPending)return').length<3||galleryMutations.split('finally{galleryMutationPending=false}').length<3)throw Error('Gallery reorder/delete must serialize mutations and always release lock');
+if(!admin.includes('galleryMutationPending=false')||galleryMutations.split('if(galleryMutationPending||photoBatchPending)return').length<3||galleryMutations.split('finally{galleryMutationPending=false}').length<3)throw Error('Gallery reorder/delete must serialize mutations and always release lock');
 console.log('PASS gallery reorder and delete operations serialize concurrent edits');
 
 const concurrentPhotoOps=admin.slice(admin.indexOf('let chosen=[],currentImages=[]'),admin.indexOf('async function decodePhoto(file)'));
