@@ -48,7 +48,9 @@ function validateBackup(data){
   if(typeof row?.image_key!=='string'||!keys.has(row.image_key))throw Error('備份缺少已發布照片檔案');
   if(!row.image_key.startsWith('public/'))throw Error('已發布照片不可指向私人原圖');
  }
- const productIds=new Set();for(const row of data.tables.products){if(!Number.isInteger(row?.id)||productIds.has(row.id))throw Error('備份產品編號不正確或重複');productIds.add(row.id)}
+ const categoryIds=new Set();for(const row of data.tables.categories){if(!Number.isInteger(row?.id)||categoryIds.has(row.id))throw Error('備份分類編號不正確或重複');categoryIds.add(row.id)}
+ for(const row of data.tables.categories){if(row.parent_id!=null&&!categoryIds.has(row.parent_id))throw Error('備份分類的上層分類不存在')}
+ const productIds=new Set();for(const row of data.tables.products){if(!Number.isInteger(row?.id)||productIds.has(row.id))throw Error('備份產品編號不正確或重複');if(!categoryIds.has(row.category_id))throw Error('備份產品所屬分類不存在：'+row?.id);productIds.add(row.id)}
  const imageIds=new Set(),assignedKeys=new Set();
  for(const row of data.tables.product_images){
   if(!Number.isInteger(row?.id)||imageIds.has(row.id))throw Error('備份照片編號不正確或重複');imageIds.add(row.id);
