@@ -24,6 +24,11 @@ for(const file of ['wrangler.toml','wrangler.toml.example']){
  if(/^\s*(ADMIN_PASSWORD_HASH|SESSION_SECRET|CLOUDFLARE_API_TOKEN)\s*=/m.test(content))throw Error('Secret must not be stored in '+file);
  console.log('PASS no embedded secrets in',file);
 }
+const ignore=read('.gitignore');
+for(const entry of ['.dev.vars','.env','site_dist/','.wrangler/']){
+ if(!ignore.split(/\r?\n/).includes(entry))throw Error('Missing .gitignore protection: '+entry);
+ console.log('PASS ignored local file:',entry);
+}
 const migrations=fs.readdirSync(path.join(root,'migrations')).filter(x=>/^\d+.*\.sql$/.test(x)).sort();
 if(!migrations.length)throw Error('No database migrations');
 for(const file of migrations){if(!read('migrations/'+file).trim())throw Error('Empty migration: '+file)}
