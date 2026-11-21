@@ -1,0 +1,32 @@
+name: Free trial checks
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check worker/index.js
+      - run: node --check admin/assets/admin.js
+      - run: node --check public/assets/site.js
+      - run: node tools/build_assets.mjs
+      - run: node tests/check_static.mjs
+      - run: node tests/check_backup.mjs
+      - name: Check database migrations locally
+        run: |
+          python3 - <<'PY'
+          import sqlite3, pathlib
+          db = sqlite3.connect(':memory:')
+          for p in sorted(pathlib.Path('migrations').glob('*.sql')):
+              db.executescript(p.read_text())
+          db.execute("INSERT INTO trial_image_objects VALUES (?,?,?,?)", ('test','image/webp',3,b'abc'))
+          assert db.execute("SELECT data FROM trial_image_objects").fetchone()[0] == b'abc'
+          print('Local migration and storage smoke test passed')
+          PY
