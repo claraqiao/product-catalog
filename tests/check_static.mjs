@@ -196,3 +196,8 @@ const healthPosition=healthSource.indexOf("if(path==='/api/health'&&method==='GE
 const schemaPosition=healthSource.indexOf('if(env.DB)await ensureTrialSchema(env.DB);');
 if(healthPosition<0||schemaPosition<0||healthPosition>schemaPosition)throw Error('Health probe must run before schema auto-initialization');
 console.log('PASS health probe does not initialize database schema');
+
+const healthBlock=healthSource.slice(healthSource.indexOf("if(path==='/api/health'&&method==='GET')"),healthSource.indexOf('if(env.DB)await ensureTrialSchema(env.DB);'));
+for(const table of ['categories','products','product_images','publish_revisions','audit_log','app_settings','admin_rate_limits','published_catalog','published_media','photo_upload_requests','trial_image_objects'])if(!healthBlock.includes("'"+table+"'"))throw Error('Health check missing required table: '+table);
+if(!healthBlock.includes('required.some(name=>!existing.has(name))'))throw Error('Health check must reject missing D1 tables');
+console.log('PASS health check covers every catalog D1 table');
