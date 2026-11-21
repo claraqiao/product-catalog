@@ -1,6 +1,21 @@
 (async()=>{
  const grid=document.querySelector('#grid'),q=document.querySelector('#q'),cat=document.querySelector('#category'),count=document.querySelector('#count'),empty=document.querySelector('#empty'),viewer=document.querySelector('#viewer'),large=document.querySelector('#large'),skuEl=document.querySelector('#viewsku'),pos=document.querySelector('#position'),prev=document.querySelector('#prev'),next=document.querySelector('#next');
  let products=[],shown=[],active=null,index=0,lastFocus=null,touchX=0;
+ try{
+  const response=await fetch('/catalog/settings.json',{cache:'no-cache'});
+  if(response.ok){
+   const settings=await response.json();
+   const title=typeof settings.site_name==='string'?settings.site_name.trim():'';
+   if(title){document.title=title;document.querySelector('.brand a').textContent=title;document.querySelector('.intro h1').textContent=title;}
+   if(settings.site_description)document.querySelector('.intro p').textContent=settings.site_description;
+   if(/^#[0-9a-fA-F]{6}$/.test(settings.brand_color||''))document.documentElement.style.setProperty('--brand',settings.brand_color);
+   if(settings.noindex==='false')document.querySelector('meta[name="robots"]')?.setAttribute('content','index,follow');
+   const url=settings.contact_url;
+   if(settings.contact_text&&typeof url==='string'&&/^https?:\/\//.test(url)){
+    const link=document.createElement('a');link.href=url;link.textContent=settings.contact_text;link.rel='noopener noreferrer';link.target='_blank';document.querySelector('.intro').append(link);
+   }
+  }
+ }catch{/* Site stays readable if settings are temporarily unavailable. */}
  try{const r=await fetch('/catalog/products.json',{cache:'no-cache'});if(!r.ok)throw Error('catalog');products=await r.json();}catch(e){count.textContent='產品資料暫時無法載入。';return;}
  [...new Set(products.map(p=>p.category).filter(Boolean))].sort().forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;cat.append(o)});
  function filter(){const term=q.value.trim().toLocaleLowerCase();shown=products.filter(p=>(!cat.value||p.category===cat.value)&&(!term||[p.sku,p.name,p.keywords,p.series].join(' ').toLocaleLowerCase().includes(term)));render();}
