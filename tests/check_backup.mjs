@@ -9,7 +9,7 @@ const context={base64ToBytes:value=>Uint8Array.from(Buffer.from(value,'base64'))
 vm.createContext(context);
 vm.runInContext(helper+'; this.validateBackup=validateBackup;',context);
 const keys=['private/originals/7/a.jpg','public/display/7/a.webp','public/thumb/7/a.webp'];
-const make=()=>({format:'catalog-v12-backup',version:1,tables:{categories:[],products:[],product_images:[{product_id:7,original_key:keys[0],display_key:keys[1],thumb_key:keys[2]}],publish_revisions:[],published_catalog:[],published_media:[],audit_log:[],app_settings:[],photo_upload_requests:[]},images:keys.map((key,i)=>({key,type:i===0?'image/jpeg':'image/webp',data:Buffer.from(i===0?[255,216,255,217]:[82,73,70,70,0,0,0,0,87,69,66,80]).toString('base64')}))});
+const make=()=>({format:'catalog-v12-backup',version:1,tables:{categories:[],products:[{id:7}],product_images:[{product_id:7,original_key:keys[0],display_key:keys[1],thumb_key:keys[2]}],publish_revisions:[],published_catalog:[],published_media:[],audit_log:[],app_settings:[],photo_upload_requests:[]},images:keys.map((key,i)=>({key,type:i===0?'image/jpeg':'image/webp',data:Buffer.from(i===0?[255,216,255,217]:[82,73,70,70,0,0,0,0,87,69,66,80]).toString('base64')}))});
 const good=make();
 const result=context.validateBackup(good);
 if(result.photos!==1)throw Error('valid backup photo count mismatch');
@@ -41,5 +41,11 @@ const wrongRole=make();wrongRole.tables.product_images[0].display_key=keys[2];
 rejected=false;try{context.validateBackup(wrongRole)}catch{rejected=true}if(!rejected)throw Error('thumbnail accepted as display photo');
 const forged=make();forged.summary={products:999,photos:999,image_bytes:0};
 const checked=context.validateBackup(forged);
-if(checked.products!==0||checked.photos!==1||checked.image_bytes<=0)throw Error('untrusted backup summary was accepted');
+if(checked.products!==1||checked.photos!==1||checked.image_bytes<=0)throw Error('untrusted backup summary was accepted');
 console.log('PASS backup validation: photo ownership, role and computed totals');
+
+const orphan=make();orphan.tables.products=[];
+rejected=false;try{context.validateBackup(orphan)}catch{rejected=true}if(!rejected)throw Error('orphaned photo was accepted');
+const duplicateProduct=make();duplicateProduct.tables.products.push({id:7});
+rejected=false;try{context.validateBackup(duplicateProduct)}catch{rejected=true}if(!rejected)throw Error('duplicate product ID was accepted');
+console.log('PASS backup validation: orphaned photo and duplicate product IDs rejected');
