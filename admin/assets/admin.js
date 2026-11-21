@@ -41,9 +41,9 @@
     const f=batch[i];$('#photoStatus').textContent=`正在處理第 ${i+1}／${batch.length} 張：${f.name}`;
     try{
      if(!['image/jpeg','image/png','image/webp'].includes(f.type))throw Error('不支援的格式');if(f.size>15*1024*1024)throw Error('原圖不可超過 15 MB');
-     const bitmap=await createImageBitmap(f),display=await canvasBlob(bitmap,1600,.80),thumb=await canvasBlob(bitmap,480,.76);bitmap.close?.();
+     const bitmap=await createImageBitmap(f);let display,thumb;try{display=await trialBlob(bitmap,1600,.80);thumb=await trialBlob(bitmap,480,.76);}finally{bitmap.close?.();}
      let token=uploadTokens.get(f);if(!token){token=crypto.randomUUID();uploadTokens.set(f,token)}
-     const fd=new FormData();fd.append('productId',pid);fd.append('uploadToken',token);fd.append('original',f,f.name);fd.append('display',display,`display-${i}.webp`);fd.append('thumb',thumb,`thumb-${i}.webp`);
+     const fd=new FormData();fd.append('productId',pid);fd.append('uploadToken',token);fd.append('original',display,`trial-${i}.webp`);fd.append('display',display,`display-${i}.webp`);fd.append('thumb',thumb,`thumb-${i}.webp`);
      await xhrUpload('/api/admin/photos/upload',fd,p=>{const pct=Math.round(((i+p)/batch.length)*100);$('#photoProgress').style.width=pct+'%';$('#photoStatus').textContent=`照片上傳中：${i+1}／${batch.length}（${Math.round(p*100)}%）`});
      uploadTokens.delete(f);
     }catch(e){failed.push(f);$('#photoStatus').textContent=`${f.name} 上傳失敗：${e.message}；將保留這張供重試。`}
@@ -56,6 +56,7 @@
   });
   if(select.value)refreshImages();
  }
+ async function trialBlob(bitmap,side,quality){while(side>=120){const blob=await canvasBlob(bitmap,side,quality);if(blob.size<=524288)return blob;side=Math.floor(side*.75);quality=Math.max(.45,quality-.08);}throw Error('照片無法壓縮至免費版大小限制');}
  function canvasBlob(bitmap,maxSide,quality){const scale=Math.min(1,maxSide/Math.max(bitmap.width,bitmap.height)),w=Math.max(1,Math.round(bitmap.width*scale)),h=Math.max(1,Math.round(bitmap.height*scale)),canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;canvas.getContext('2d',{alpha:false}).drawImage(bitmap,0,0,w,h);return new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error('照片轉檔失敗')),'image/webp',quality))}
  function xhrUpload(url,formData,onProgress){return new Promise((resolve,reject)=>{const x=new XMLHttpRequest();x.open('POST',url);x.withCredentials=true;x.upload.onprogress=e=>{if(e.lengthComputable)onProgress(e.loaded/e.total)};x.onload=()=>{let d={};try{d=JSON.parse(x.responseText)}catch{}if(x.status>=200&&x.status<300)resolve(d);else reject(Error(d.error||`伺服器錯誤 (${x.status})`))};x.onerror=()=>reject(Error('網路中斷'));x.send(formData)})}
  function csvPage(){content.innerHTML=intro('CSV 匯入／匯出','支援 UTF-8（含 BOM）。匯入前先乾跑檢查，既有 SKU 不會被覆寫。','<button class="outline-btn" id="csvExport">↓ 匯出全部產品 CSV</button>')+`<section class="panel"><h3>匯入產品資料</h3><p>選擇 CSV 檔案。必要欄位：<b>sku、name、category</b>；可選欄位：series、keywords、specification、internal_note。匯入資料一律先建立為草稿。</p><label class="field">選擇 CSV 檔案<input id="csvFile" type="file" accept=".csv,text/csv"></label><div id="csvFileName" class="muted">尚未選擇檔案</div><div class="modal-actions"><button id="csvPreview" class="primary" disabled>先檢查檔案</button></div><div id="csvResult"></div></section>`;
