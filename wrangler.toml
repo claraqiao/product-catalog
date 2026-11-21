@@ -1,0 +1,21 @@
+name = "product-catalog"
+main = "worker/index.js"
+compatibility_date = "2026-11-20"
+
+[assets]
+directory = "./site_dist"
+binding = "ASSETS"
+not_found_handling = "404-page"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "product-catalog"
+database_id = "72c0fec3-b9ad-4b9c-9ddd-e9880736b65d"
+migrations_dir = "migrations"
+
+# Free trial: images are stored in D1; no R2 subscription required.
+
+# Cloudflare Secrets（不要寫入此檔）：
+# ADMIN_USERNAME
+# ADMIN_PASSWORD_HASH
+# SESSION_SECRET
