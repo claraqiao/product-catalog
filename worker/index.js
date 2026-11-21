@@ -146,7 +146,7 @@ export default {async fetch(request,env){if(!env.IMAGES&&env.DB)env={...env,IMAG
   if(path==='/api/admin/publish/history'&&method==='GET'){if(!await requireAdmin(request,env))return fail('Unauthorized',401);const {results=[]}=await env.DB.prepare('SELECT revision,status,created_at,notes FROM publish_revisions ORDER BY created_at DESC LIMIT 30').all();return json({revisions:results})}
   if(path==='/api/admin/photos/upload'&&method==='POST'){
    if(!await requireAdmin(request,env))return fail('Unauthorized',401);if(!env.IMAGES)return fail('照片儲存服務尚未設定',503);
-   const fd=await request.formData(),pid=Number(fd.get('productId')),o=fd.get('original'),d=fd.get('display'),t=fd.get('thumb'),token=String(fd.get('uploadToken')||'');
+   const declaredSize=Number(request.headers.get('content-length')||0);if(declaredSize>3*1024*1024)return fail('免費測試版單次照片上傳不可超過 3 MiB',413);const fd=await request.formData(),pid=Number(fd.get('productId')),o=fd.get('original'),d=fd.get('display'),t=fd.get('thumb'),token=String(fd.get('uploadToken')||'');
    if(!Number.isInteger(pid)||!pid||!(o instanceof File)||!(d instanceof File)||!(t instanceof File)||!/^[0-9a-f-]{36}$/i.test(token))return fail('照片資料不完整');
    const prior=await env.DB.prepare('SELECT product_id FROM photo_upload_requests WHERE token=?').bind(token).first();if(prior)return prior.product_id===pid?json({ok:true,uploaded:1,duplicateRequest:true}):fail('上傳識別碼已被其他產品使用',409);
    const product=await env.DB.prepare('SELECT id FROM products WHERE id=?').bind(pid).first();if(!product)return fail('找不到產品',404);
