@@ -83,3 +83,8 @@ for(const token of ["large.addEventListener('error'","large.hidden=true","docume
  if(!catalog.includes(token))throw Error('Missing photo load error handling '+token);
 }
 console.log('PASS published photo load failure has an accessible fallback message');
+
+for(const token of ["if(!o.size||!d.size||!t.size)","o.size+d.size+t.size>3*1024*1024","照片檔案不可為空白"]){
+ if(!worker.includes(token))throw Error('Missing actual photo upload size validation: '+token);
+}
+console.log('PASS reject empty photos and oversized multipart files even without Content-Length');
