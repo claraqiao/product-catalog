@@ -195,11 +195,11 @@ export default {async fetch(request,env){if(!env.IMAGES&&env.DB)env={...env,IMAG
   if(path==='/api/admin/backup/images'&&method==='GET'){
    if(!await requireAdmin(request,env))return fail('Unauthorized',401);
    const cursor=url.searchParams.get('cursor')||'';
-   if(cursor.length>512)return fail('游標長度不正確',422);
+   if(cursor.length>512||cursor.includes('\\0'))return fail('游標長度或內容不正確',422);
    const {results=[]}=await env.DB.prepare('SELECT object_key,content_type,size_bytes,data FROM trial_image_objects WHERE object_key>? ORDER BY object_key LIMIT 6').bind(cursor).all();
    const batch=results.slice(0,5),images=[];
    for(const row of batch){const bytes=new Uint8Array(row.data);if(bytes.byteLength!==Number(row.size_bytes))return fail('備份照片資料不完整：'+row.object_key,409);images.push({key:row.object_key,type:row.content_type,data:bytesToBase64(bytes)})}
-   return json({format:'catalog-v12-d1-photo-batch',version:1,images,hasMore:results.length>5,nextCursor:batch.at(-1)?.object_key||cursor,includesR2:false,restorable:false,note:'D1 舊照片分批匯出資料；不包含 R2 照片，需保存全部批次與商品資料才能進行未來還原'});
+   return json({format:'catalog-v12-d1-photo-batch',version:1,images,exportedCount:images.length,hasMore:results.length>5,nextCursor:batch.at(-1)?.object_key||cursor,includesR2:false,restorable:false,note:'D1 舊照片分批匯出資料；不包含 R2 照片，需保存全部批次與商品資料才能進行未來還原'});
   }
   if(path==='/api/admin/backup/manifest'&&method==='GET'){
    if(!await requireAdmin(request,env))return fail('Unauthorized',401);
