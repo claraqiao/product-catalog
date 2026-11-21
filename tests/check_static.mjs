@@ -72,3 +72,8 @@ for(const token of ["const hasProductHash=location.hash.startsWith('#product=')"
  if(!catalog.includes(token))throw Error('Missing malformed-link or share-status handling '+token);
 }
 console.log('PASS malformed product hash and stale share status handling');
+
+for(const token of ["if(e.key==='Tab')","e.shiftKey&&document.activeElement===first","document.activeElement===last","last.focus()","first.focus()"]){
+ if(!catalog.includes(token))throw Error('Missing keyboard focus containment: '+token);
+}
+console.log('PASS photo dialog keyboard focus containment');
