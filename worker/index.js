@@ -139,6 +139,7 @@ export default {async fetch(request,env){if(!env.IMAGES&&env.DB)env={...env,IMAG
   if(path==='/api/admin/storage/migrate'&&method==='POST'){
    if(!await requireAdmin(request,env))return fail('Unauthorized',401);
    if(!env.IMAGES_R2||env.IMAGES_IS_TRIAL)return fail('尚未配置 R2，不能搬移照片',409);
+   if(env.ALLOW_R2_MIGRATION!=='true')return fail('依照不付費原則，R2 搬移預設關閉；未明確同意及設定前不會啟動',403);
    const b=await body(request);
    if(b?.confirm!=='COPY_TO_R2')return fail('必須明確確認 COPY_TO_R2 才能開始複製',422);
    const cursor=typeof b?.cursor==='string'&&b.cursor.length<512?b.cursor:'';
