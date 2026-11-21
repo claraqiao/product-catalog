@@ -126,7 +126,7 @@ function imageStoreWithLegacyFallback(r2,db){
   async head(key){return await r2.head(key)||await legacy.head(key)}
  };
 }
-export default {async fetch(request,env){if(!env.IMAGES&&env.DB)env={...env,IMAGES:trialImages(env.DB),IMAGES_IS_TRIAL:true};else if(env.IMAGES&&env.DB)env={...env,IMAGES:imageStoreWithLegacyFallback(env.IMAGES,env.DB)};const url=new URL(request.url),path=url.pathname,method=request.method;
+export default {async fetch(request,env){if(!env.IMAGES&&env.DB)env={...env,IMAGES:trialImages(env.DB),IMAGES_IS_TRIAL:true};else if(env.IMAGES&&env.DB)env={...env,IMAGES_R2:env.IMAGES,IMAGES:imageStoreWithLegacyFallback(env.IMAGES,env.DB)};const url=new URL(request.url),path=url.pathname,method=request.method;
  try{
   if(path==='/api/health'&&method==='GET'){if(!env.DB)return json({ok:false,service:'catalog-api',error:'D1 database binding missing'},503);const required=['categories','products','product_images','publish_revisions','audit_log','app_settings','admin_rate_limits','published_catalog','published_media','photo_upload_requests','trial_image_objects'];const schema=await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table'").all();const existing=new Set((schema.results||[]).map(row=>row.name));if(required.some(name=>!existing.has(name)))return json({ok:false,service:'catalog-api',error:'D1 schema not ready'},503);return json({ok:true,service:'catalog-api'});}
   if(env.DB)await ensureTrialSchema(env.DB);
@@ -137,7 +137,7 @@ export default {async fetch(request,env){if(!env.IMAGES&&env.DB)env={...env,IMAG
   if(path==='/api/admin/storage'&&method==='GET'){if(!await requireAdmin(request,env))return fail('Unauthorized',401);const usingR2=!!env.IMAGES?.list&&!env.IMAGES_IS_TRIAL;let used=0,objects=0;if(usingR2){let cursor;do{const page=await env.IMAGES.list({cursor,limit:500});for(const item of page.objects||[]){used+=Number(item.size||0);objects++;}cursor=page.truncated?page.cursor:undefined;}while(cursor)}else{const r=await env.DB.prepare('SELECT COALESCE(SUM(size_bytes),0) AS bytes,COUNT(*) AS objects FROM trial_image_objects').first();used=Number(r?.bytes||0);objects=Number(r?.objects||0)}const trialRow=usingR2?await env.DB.prepare('SELECT COUNT(*) AS count,COALESCE(SUM(size_bytes),0) AS bytes FROM trial_image_objects').first():null;const legacyTrialObjects=Number(trialRow?.count||0),legacyTrialBytes=Number(trialRow?.bytes||0);const limit=usingR2?null:200*1024*1024;const settings=await env.DB.prepare("SELECT value FROM app_settings WHERE key='warning_percent'").first();const threshold=Number(settings?.value||80);return json({bytes:used,objects,limitBytes:limit,percent:usingR2?null:Math.round(1000*used/limit)/10,warning:usingR2?false:used/limit*100>=threshold,warningPercent:threshold,storageMode:usingR2?'r2':'d1-trial',legacyTrialObjects,legacyTrialBytes,paidStorageEnabled:usingR2});}
   if(path==='/api/admin/storage/migrate'&&method==='POST'){
    if(!await requireAdmin(request,env))return fail('Unauthorized',401);
-   if(!env.IMAGES||env.IMAGES_IS_TRIAL)return fail('尚未配置 R2，不能搬移照片',409);
+   if(!env.IMAGES_R2||env.IMAGES_IS_TRIAL)return fail('尚未配置 R2，不能搬移照片',409);
    const b=await body(request);
    if(b?.confirm!=='COPY_TO_R2')return fail('必須明確確認 COPY_TO_R2 才能開始複製',422);
    const cursor=typeof b?.cursor==='string'&&b.cursor.length<512?b.cursor:'';
@@ -149,10 +149,10 @@ export default {async fetch(request,env){if(!env.IMAGES&&env.DB)env={...env,IMAG
      if(bytes.byteLength!==Number(row.size_bytes))throw Error('D1 照片資料大小不符');
      const digest=async data=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',data))).map(x=>x.toString(16).padStart(2,'0')).join('');
      const sourceHash=await digest(bytes);
-     const existing=await env.IMAGES.head(row.object_key);
+     const existing=await env.IMAGES_R2.head(row.object_key);
      if(existing&&Number(existing.size)!==bytes.byteLength)throw Error('R2 同名檔案大小不同，拒絕覆寫');
-     if(!existing)await env.IMAGES.put(row.object_key,bytes,{httpMetadata:{contentType:row.content_type}});
-     const saved=await env.IMAGES.get(row.object_key);
+     if(!existing)await env.IMAGES_R2.put(row.object_key,bytes,{httpMetadata:{contentType:row.content_type}});
+     const saved=await env.IMAGES_R2.get(row.object_key);
      if(!saved)throw Error('R2 複製後無法讀回照片');
      const targetBytes=new Uint8Array(await saved.arrayBuffer());
      if(targetBytes.byteLength!==bytes.byteLength||await digest(targetBytes)!==sourceHash)throw Error('R2 照片內容 SHA-256 核對失敗，保留 D1 原檔');
@@ -164,7 +164,7 @@ export default {async fetch(request,env){if(!env.IMAGES&&env.DB)env={...env,IMAG
   }
   if(path==='/api/admin/storage/migration-status'&&method==='GET'){
    if(!await requireAdmin(request,env))return fail('Unauthorized',401);
-   if(!env.IMAGES||env.IMAGES_IS_TRIAL)return fail('尚未配置 R2',409);
+   if(!env.IMAGES_R2||env.IMAGES_IS_TRIAL)return fail('尚未配置 R2',409);
    const cursor=url.searchParams.get('cursor')||'';
    if(cursor.length>512)return fail('游標長度不正確',422);
    const total=await env.DB.prepare('SELECT COUNT(*) AS count FROM trial_image_objects').first();
@@ -172,7 +172,7 @@ export default {async fetch(request,env){if(!env.IMAGES&&env.DB)env={...env,IMAG
    const batch=results.slice(0,20),mismatches=[];let verified=0;
    const digest=async bytes=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))).map(x=>x.toString(16).padStart(2,'0')).join('');
    for(const row of batch){
-    const source=new Uint8Array(row.data),target=await env.IMAGES.get(row.object_key);
+    const source=new Uint8Array(row.data),target=await env.IMAGES_R2.get(row.object_key);
     if(!target){mismatches.push({key:row.object_key,reason:'R2 缺少檔案'});continue}
     const targetBytes=new Uint8Array(await target.arrayBuffer());
     if(source.byteLength!==Number(row.size_bytes)||source.byteLength!==targetBytes.byteLength||await digest(source)!==await digest(targetBytes))mismatches.push({key:row.object_key,reason:'照片內容不一致'});
