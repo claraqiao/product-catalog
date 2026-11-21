@@ -140,7 +140,7 @@ if(!admin.includes("if(select.value===pid&&requestId===galleryRequestId)$('#exis
 console.log('PASS product switching clears old photos and suppresses stale error overlays');
 
 if(!admin.includes('galleryRequestId=0')||!admin.includes('requestId=++galleryRequestId')||!admin.includes('select.value!==pid||requestId!==galleryRequestId'))throw Error('Photo gallery must ignore out-of-order responses, even for same product');
-if(!admin.includes('if(fresh===false)'))throw Error('Photo upload must reject stale gallery capacity checks');
+if(!admin.includes('if(fresh!==true)'))throw Error('Photo upload must reject stale gallery capacity checks');
 console.log('PASS out-of-order gallery requests and stale upload capacity checks are guarded');
 
 const safeGallery=admin.slice(admin.indexOf('async function refreshImages()'),admin.indexOf("select.addEventListener('change'"));
@@ -159,3 +159,7 @@ console.log('PASS photo upload and gallery mutations cannot overlap and early va
 const productSwitch=admin.slice(admin.indexOf("select.addEventListener('change',()=>{currentImages=[]"),admin.indexOf("$('#photoFiles').addEventListener('change'"));
 for(const token of ["$('#photoUpload').textContent='確認上傳照片'","$('#photoProgress').style.width='0%'","$('#photoStatus').textContent='請選擇照片後上傳。'"])if(!productSwitch.includes(token))throw Error('Switching products must reset photo upload UI: '+token);
 console.log('PASS switching products resets photo retry label, progress and status');
+
+const freshGallery=admin.slice(admin.indexOf('async function refreshImages()'),admin.indexOf("select.addEventListener('change'"));
+if(!freshGallery.includes('return true;')||!admin.includes('if(fresh!==true)'))throw Error('Upload requires an explicitly successful current gallery response');
+console.log('PASS photo upload rejects missing or stale gallery responses');
