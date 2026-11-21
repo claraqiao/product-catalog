@@ -205,3 +205,7 @@ console.log('PASS health check covers every catalog D1 table');
 const backupExportBlock=healthSource.slice(healthSource.indexOf("if(path==='/api/admin/backup/export'"),healthSource.indexOf("if(path==='/api/admin/backup/inspect'"));
 if(!backupExportBlock.includes('const backup=await buildBackup(env);validateBackup(backup);'))throw Error('Backup export must validate contents before download');
 console.log('PASS backup export checks integrity before download');
+
+const backupPageSource=admin.slice(admin.indexOf('function backupPage()'),admin.indexOf('function backupPage()')+2200);
+for(const warning of ['18 MiB','800 張照片','還原功能也尚未完成','不要把本網站當成唯一備份'])if(!backupPageSource.includes(warning))throw Error('Backup page missing capacity/safety warning: '+warning);
+console.log('PASS backup page discloses trial limits and missing restore');
