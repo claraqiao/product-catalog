@@ -163,3 +163,8 @@ console.log('PASS switching products resets photo retry label, progress and stat
 const freshGallery=admin.slice(admin.indexOf('async function refreshImages()'),admin.indexOf("select.addEventListener('change'"));
 if(!freshGallery.includes('return true;')||!admin.includes('if(fresh!==true)'))throw Error('Upload requires an explicitly successful current gallery response');
 console.log('PASS photo upload rejects missing or stale gallery responses');
+
+const photoManagerInit=admin.slice(admin.indexOf('async function refreshImages()'),admin.indexOf('async function decodePhoto(file)'));
+if(!photoManagerInit.includes("if(select.value)refreshImages().catch(e=>notify('無法載入照片清單：'+e.message))"))throw Error('Initial gallery load must handle rejected promises');
+if(!photoManagerInit.includes("if(f.size===0)throw Error('照片檔案是空的，請重新選擇')"))throw Error('Reject zero-byte photos before decoding');
+console.log('PASS initial gallery errors handled and empty photo files rejected');
