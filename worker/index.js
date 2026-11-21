@@ -31,14 +31,14 @@ function validateBackup(data){
  if(!data||data.format!=='catalog-v12-backup'||data.version!==1||!data.tables||!Array.isArray(data.images))throw Error('備份檔格式不正確或版本不支援');
  const allowed=['categories','products','product_images','publish_revisions','published_catalog','published_media','audit_log','app_settings','photo_upload_requests'];
  for(const n of allowed)if(!Array.isArray(data.tables[n]))throw Error('備份缺少資料表：'+n);
- const keys=new Set();
+ const keys=new Set();let decodedImageBytes=0;
  for(const im of data.images){
   if(!im||typeof im.key!=='string'||!/^((private\/originals\/\d+\/)|(public\/(display|thumb)\/\d+\/))[A-Za-z0-9._-]+$/.test(im.key)||typeof im.data!=='string'||!['image/jpeg','image/png','image/webp'].includes(im.type))throw Error('備份含有不允許的照片項目');
   if(keys.has(im.key))throw Error('備份含有重複的照片檔案：'+im.key);
   keys.add(im.key);
   if(!/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(im.data))throw Error('照片資料不是有效的 Base64：'+im.key);
   const bytes=base64ToBytes(im.data);
-  if(!bytes.length||bytes.length>15*1024*1024)throw Error('單張照片大小不正確：'+im.key);
+  if(!bytes.length||bytes.length>512*1024)throw Error('免費測試版備份中的單張照片不可超過 512 KiB：'+im.key);decodedImageBytes+=bytes.length;if(decodedImageBytes>18*1024*1024)throw Error('備份照片總量超過 18 MiB 安全檢查上限');
   if(im.type==='image/jpeg'&&!(bytes[0]===255&&bytes[1]===216&&bytes[2]===255))throw Error('備份照片 JPEG 格式錯誤：'+im.key);
   if(im.type==='image/png'&&!(bytes[0]===137&&bytes[1]===80&&bytes[2]===78&&bytes[3]===71))throw Error('備份照片 PNG 格式錯誤：'+im.key);
   if(im.type==='image/webp'&&!(bytes[0]===82&&bytes[1]===73&&bytes[2]===70&&bytes[3]===70&&bytes[8]===87&&bytes[9]===69&&bytes[10]===66&&bytes[11]===80))throw Error('備份照片 WebP 格式錯誤：'+im.key);
