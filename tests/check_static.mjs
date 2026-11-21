@@ -36,7 +36,7 @@ for(const token of ["if(!raw||!env.SESSION_SECRET)return null","declaredSize>3*1
 
 const catalog=fs.readFileSync(new URL('public/assets/site.js',root),'utf8');
 const catalogCss=fs.readFileSync(new URL('public/assets/site.css',root),'utf8');
-for(const token of ['visibleCount=80','shown.slice(0,visibleCount)','visibleCount+=80','more.hidden=shown.length<=visibleCount']){
+for(const token of ['visibleCount=80','shown.slice(start,visibleCount)','visibleCount+=80','more.hidden=shown.length<=visibleCount']){
  if(!catalog.includes(token))throw Error('Missing catalog incremental rendering: '+token);
 }
 if(!catalogCss.includes('.load-more[hidden]'))throw Error('Missing catalog pagination styling');
@@ -56,3 +56,8 @@ if(!worker.includes("o.size>512*1024||d.size>512*1024||t.size>512*1024"))throw E
 const trialAdmin=fs.readFileSync(new URL('admin/assets/admin.js',root),'utf8');
 if(!trialAdmin.includes('不是手機裡的原始檔，請自行保留原始照片'))throw Error('Original photo retention warning missing');
 console.log('PASS trial image limits and accurate original-photo warning');
+
+for(const token of ['document.createDocumentFragment()','render(true)','const start=append?grid.children.length:0']){
+ if(!catalog.includes(token))throw Error('Missing append-only catalog batches: '+token);
+}
+console.log('PASS show-more preserves existing cards and appends only new products');
