@@ -188,3 +188,6 @@ console.log('PASS health endpoint validates D1 readiness');
 const uploadTransport=admin.slice(admin.indexOf('function xhrUpload('),admin.indexOf('function csvPage('));
 if(!uploadTransport.includes('x.timeout=120000')||!uploadTransport.includes('x.ontimeout=')||!uploadTransport.includes('x.onabort='))throw Error('Photo upload must handle timeouts and aborts');
 console.log('PASS photo upload timeout and abort handling');
+
+if(!uploadTransport.includes('d?.ok===true&&d.uploaded===1')||!uploadTransport.includes('伺服器未確認照片已儲存'))throw Error('Upload success must require explicit server acknowledgement');
+console.log('PASS upload success requires confirmed saved photo');
