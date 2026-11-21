@@ -99,3 +99,6 @@ console.log('PASS iPad/iPhone photo decoding fallback and URL cleanup');
 
 if(!admin.includes("b.type!=='image/webp'")||!admin.includes('目前瀏覽器無法輸出 WebP 照片'))throw Error('Missing Safari WebP output validation');
 console.log('PASS Safari photo upload rejects unsupported WebP encoding before sending');
+
+if(!admin.includes("f.type===''&&/\\.(jpe?g|png|webp)$/i.test(f.name)"))throw Error('Missing iOS blank MIME type filename fallback');
+console.log('PASS iOS photo picker supports supported file extensions when MIME type is missing');
