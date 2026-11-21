@@ -171,7 +171,10 @@ export default {async fetch(request,env){if(!env.IMAGES&&env.DB)env={...env,IMAG
    if(!await requireAdmin(request,env))return fail('Unauthorized',401);
    const id=Number(deleteImageMatch[1]),row=await env.DB.prepare('SELECT product_id,original_key,display_key,thumb_key FROM product_images WHERE id=?').bind(id).first();if(!row)return fail('找不到照片',404);
    await env.DB.prepare('DELETE FROM product_images WHERE id=?').bind(id).run();
-   await Promise.all([row.original_key,row.display_key,row.thumb_key].filter(Boolean).map(k=>env.IMAGES.delete(k)));
+   // Keep immutable media referenced by the currently published catalog.
+    const referenced=await env.DB.prepare('SELECT image_key FROM published_media WHERE image_key IN (?,?)').bind(row.display_key,row.thumb_key).all();
+    const keep=new Set((referenced.results||[]).map(x=>x.image_key));
+    await Promise.all([row.original_key,row.display_key,row.thumb_key].filter(k=>k&&!keep.has(k)).map(k=>env.IMAGES.delete(k)));
    const {results=[]}=await env.DB.prepare('SELECT id FROM product_images WHERE product_id=? ORDER BY sort_order,id').bind(row.product_id).all();
    const statements=results.map((x,i)=>env.DB.prepare('UPDATE product_images SET sort_order=?,is_cover=? WHERE id=?').bind(i,i===0?1:0,x.id));if(statements.length)await env.DB.batch(statements);
    await env.DB.prepare(`INSERT INTO audit_log(action,entity_type,entity_id,details) VALUES('delete_image','product',?,'刪除產品照片')`).bind(String(row.product_id)).run();return json({ok:true});
