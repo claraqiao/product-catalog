@@ -184,3 +184,7 @@ console.log('PASS authenticated admin writes require same-origin request header'
 const healthSource=fs.readFileSync(new URL('worker/index.js',root),'utf8');
 if(!healthSource.includes("error:'D1 database binding missing'")||!healthSource.includes("error:'D1 schema not ready'"))throw Error('Health endpoint must fail without D1 binding or product schema');
 console.log('PASS health endpoint validates D1 readiness');
+
+const uploadTransport=admin.slice(admin.indexOf('function xhrUpload('),admin.indexOf('function csvPage('));
+if(!uploadTransport.includes('x.timeout=120000')||!uploadTransport.includes('x.ontimeout=')||!uploadTransport.includes('x.onabort='))throw Error('Photo upload must handle timeouts and aborts');
+console.log('PASS photo upload timeout and abort handling');
