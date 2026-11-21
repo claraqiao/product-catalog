@@ -42,7 +42,7 @@
    for(let i=0;i<batch.length;i++){
     const f=batch[i];$('#photoStatus').textContent=`正在處理第 ${i+1}／${batch.length} 張：${f.name}`;
     try{
-     if(!['image/jpeg','image/png','image/webp'].includes(f.type)&&!(f.type===''&&/\.(jpe?g|png|webp)$/i.test(f.name)))throw Error('不支援的格式，請選擇 JPG、PNG 或 WebP 照片');if(f.size>15*1024*1024)throw Error('原圖不可超過 15 MB');
+     if(!['image/jpeg','image/png','image/webp'].includes(f.type)&&!(f.type===''&&/\.(jpe?g|png|webp)$/i.test(f.name)))throw Error('不支援的格式，請選擇 JPG、PNG 或 WebP 照片');if(f.size===0)throw Error('照片檔案是空的，請重新選擇');if(f.size>15*1024*1024)throw Error('原圖不可超過 15 MB');
      const decoded=await decodePhoto(f);let display,thumb;try{display=await trialBlob(decoded.image,1600,.80);thumb=await trialBlob(decoded.image,480,.76);}finally{decoded.cleanup();}
      let token=uploadTokens.get(f);if(!token){token=crypto.randomUUID();uploadTokens.set(f,token)}
      const fd=new FormData();fd.append('productId',pid);fd.append('uploadToken',token);fd.append('original',display,`trial-${i}.webp`);fd.append('display',display,`display-${i}.webp`);fd.append('thumb',thumb,`thumb-${i}.webp`);
@@ -56,7 +56,7 @@
    try{await refreshImages();const current=products.find(p=>String(p.id)===pid);if(current)current.photos=currentImages.length;}catch(e){notify('照片清單更新失敗：'+e.message)}
    select.disabled=false;$('#photoFiles').disabled=false;btn.textContent=chosen.length?'重新上傳失敗照片':'確認上傳照片';btn.disabled=!chosen.length;photoBatchPending=false;
   });
-  if(select.value)refreshImages();
+  if(select.value)refreshImages().catch(e=>notify('無法載入照片清單：'+e.message));
  }
  async function decodePhoto(file){
   if(typeof createImageBitmap==='function'){try{const bitmap=await createImageBitmap(file);return {image:bitmap,cleanup:()=>bitmap.close?.()}}catch{}}
