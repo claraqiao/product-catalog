@@ -244,3 +244,9 @@ if(!healthSource.includes('imageStoreWithLegacyFallback(env.IMAGES,env.DB)'))thr
 if(!healthSource.includes('IMAGES_R2:env.IMAGES'))throw Error('Raw R2 binding must remain available for independent migration verification');
 if(!healthSource.includes('if(env.IMAGES_R2){const legacy='))throw Error('Mixed-store backup must fail safely');
 console.log('PASS D1 legacy read-through and independent R2 verification');
+
+const freeStorageRoute=healthSource.slice(healthSource.indexOf("if(path==='/api/admin/storage'"),healthSource.indexOf("if(path==='/api/admin/bootstrap'"));
+if(!freeStorageRoute.includes('remainingBytes:usingR2?null:Math.max(0,limit-used)')||!freeStorageRoute.includes('estimatedFilesAtCurrentAverage'))throw Error('Free storage forecast missing');
+if(!freeStorageRoute.includes("env.ALLOW_R2_MIGRATION!=='true'"))throw Error('Potentially billable R2 migration must default to disabled');
+if(!admin.includes('按現有照片檔案平均大小'))throw Error('Free storage capacity estimate missing from iPad UI');
+console.log('PASS free storage capacity estimate and R2 migration opt-in guard');
