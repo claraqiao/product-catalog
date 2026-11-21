@@ -133,3 +133,8 @@ const galleryRefresh=admin.slice(admin.indexOf('async function refreshImages()')
 if(!galleryRefresh.includes('if(select.value!==pid)return;currentImages=r.images||[]'))throw Error('Stale gallery responses must not overwrite selected product images');
 if(!galleryRefresh.includes("refreshImages().catch(e=>notify('無法載入照片清單：'+e.message))"))throw Error('Gallery change listener must handle loading errors');
 console.log('PASS stale product photo gallery responses ignored and change errors handled');
+
+const galleryChange=admin.slice(admin.indexOf("select.addEventListener('change',()=>{currentImages=[]"),admin.indexOf("$('#photoFiles').addEventListener('change'"));
+if(!galleryChange.includes('正在載入這款商品的照片'))throw Error('Product switch must clear previous photo gallery');
+if(!admin.includes("if(select.value===pid)$('#existingPhotos').innerHTML"))throw Error('Stale gallery errors must not overwrite newly selected product');
+console.log('PASS product switching clears old photos and suppresses stale error overlays');
