@@ -33,6 +33,7 @@ jobs:
         run: |
           test -n "$CLOUDFLARE_API_TOKEN" || { echo "Missing CLOUDFLARE_API_TOKEN GitHub secret"; exit 1; }
           test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "Missing CLOUDFLARE_ACCOUNT_ID GitHub secret"; exit 1; }
+          test "$CLOUDFLARE_ACCOUNT_ID" = "c4761a3460010d52b8ee8a4156a826da" || { echo "Cloudflare account does not match the catalog project"; exit 1; }
       - name: Validate application and build assets
         run: |
           node --check worker/index.js
