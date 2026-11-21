@@ -102,3 +102,7 @@ console.log('PASS Safari photo upload rejects unsupported WebP encoding before s
 
 if(!admin.includes("f.type===''&&/\\.(jpe?g|png|webp)$/i.test(f.name)"))throw Error('Missing iOS blank MIME type filename fallback');
 console.log('PASS iOS photo picker supports supported file extensions when MIME type is missing');
+
+const fallback=admin.slice(admin.indexOf('async function decodePhoto(file)'),admin.indexOf('async function trialBlob(',admin.indexOf('async function decodePhoto(file)')));
+if(fallback.indexOf('img.onload=resolve')<0||fallback.indexOf('img.onload=resolve')>fallback.indexOf('img.src=url'))throw Error('Safari image load handler must be registered before assigning src');
+console.log('PASS Safari image load handlers registered before source assignment');
