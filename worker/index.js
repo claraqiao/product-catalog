@@ -134,17 +134,18 @@ export default {async fetch(request,env){if(!env.IMAGES&&env.DB)env={...env,IMAG
    const batch=results.slice(0,10);let copied=0,already=0;const failures=[];
    for(const row of batch){
     try{
-     const existing=await env.IMAGES.head(row.object_key);
-     if(existing){
-      if(Number(existing.size)!==Number(row.size_bytes))throw Error('R2 同名檔案大小不同，拒絕覆寫');
-      already++;continue;
-     }
      const bytes=new Uint8Array(row.data);
      if(bytes.byteLength!==Number(row.size_bytes))throw Error('D1 照片資料大小不符');
-     await env.IMAGES.put(row.object_key,bytes,{httpMetadata:{contentType:row.content_type}});
-     const saved=await env.IMAGES.head(row.object_key);
-     if(!saved||Number(saved.size)!==bytes.byteLength)throw Error('R2 複製後大小核對失敗');
-     copied++;
+     const digest=async data=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',data))).map(x=>x.toString(16).padStart(2,'0')).join('');
+     const sourceHash=await digest(bytes);
+     const existing=await env.IMAGES.head(row.object_key);
+     if(existing&&Number(existing.size)!==bytes.byteLength)throw Error('R2 同名檔案大小不同，拒絕覆寫');
+     if(!existing)await env.IMAGES.put(row.object_key,bytes,{httpMetadata:{contentType:row.content_type}});
+     const saved=await env.IMAGES.get(row.object_key);
+     if(!saved)throw Error('R2 複製後無法讀回照片');
+     const targetBytes=new Uint8Array(await saved.arrayBuffer());
+     if(targetBytes.byteLength!==bytes.byteLength||await digest(targetBytes)!==sourceHash)throw Error('R2 照片內容 SHA-256 核對失敗，保留 D1 原檔');
+     if(existing)already++;else copied++;
     }catch(e){failures.push({key:row.object_key,error:String(e.message||e)})}
    }
    const nextCursor=failures.length?cursor:(batch.at(-1)?.object_key||cursor);
