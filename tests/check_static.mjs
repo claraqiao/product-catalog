@@ -23,3 +23,8 @@ for(const token of ["const sameProducts=JSON.stringify(prepared.products)===JSON
  if(!worker.includes(token))throw Error('Missing publish safety: '+token);
  console.log('PASS publish confirmation guard:',token);
 }
+
+for(const token of ["status='superseded'","WHERE status='pending' AND revision<>?","必須明確確認有效的發布版本"]){
+ if(!worker.includes(token))throw Error('Missing publish revision safety: '+token);
+ console.log('PASS publish revision safety:',token);
+}
