@@ -9,7 +9,7 @@ const context={base64ToBytes:value=>Uint8Array.from(Buffer.from(value,'base64'))
 vm.createContext(context);
 vm.runInContext(helper+'; this.validateBackup=validateBackup;',context);
 const keys=['private/originals/7/a.jpg','public/display/7/a.webp','public/thumb/7/a.webp'];
-const make=()=>({format:'catalog-v12-backup',version:1,tables:{categories:[{id:3,parent_id:null}],products:[{id:7,category_id:3}],product_images:[{id:11,product_id:7,original_key:keys[0],display_key:keys[1],thumb_key:keys[2]}],publish_revisions:[],published_catalog:[],published_media:[],audit_log:[],app_settings:[],photo_upload_requests:[]},images:keys.map((key,i)=>({key,type:i===0?'image/jpeg':'image/webp',data:Buffer.from(i===0?[255,216,255,217]:[82,73,70,70,0,0,0,0,87,69,66,80]).toString('base64')}))});
+const make=()=>({format:'catalog-v12-backup',version:1,tables:{categories:[{id:3,parent_id:null}],products:[{id:7,sku:'A-007',name:'測試商品',category_id:3}],product_images:[{id:11,product_id:7,original_key:keys[0],display_key:keys[1],thumb_key:keys[2]}],publish_revisions:[],published_catalog:[],published_media:[],audit_log:[],app_settings:[],photo_upload_requests:[]},images:keys.map((key,i)=>({key,type:i===0?'image/jpeg':'image/webp',data:Buffer.from(i===0?[255,216,255,217]:[82,73,70,70,0,0,0,0,87,69,66,80]).toString('base64')}))});
 const good=make();
 const result=context.validateBackup(good);
 if(result.photos!==1)throw Error('valid backup photo count mismatch');
@@ -73,3 +73,11 @@ rejected=false;try{context.validateBackup(selfParent)}catch{rejected=true}if(!re
 const cycle=make();cycle.tables.categories.push({id:4,parent_id:3});cycle.tables.categories[0].parent_id=4;
 rejected=false;try{context.validateBackup(cycle)}catch{rejected=true}if(!rejected)throw Error('circular category hierarchy was accepted');
 console.log('PASS backup validation: category cycles and self-parent relationships rejected');
+
+const duplicateSku=make();duplicateSku.tables.products.push({id:8,sku:'A-007',name:'另一款',category_id:3});
+rejected=false;try{context.validateBackup(duplicateSku)}catch{rejected=true}if(!rejected)throw Error('duplicate product SKU was accepted');
+const blankSku=make();blankSku.tables.products[0].sku=' ';
+rejected=false;try{context.validateBackup(blankSku)}catch{rejected=true}if(!rejected)throw Error('blank product SKU was accepted');
+const blankName=make();blankName.tables.products[0].name='';
+rejected=false;try{context.validateBackup(blankName)}catch{rejected=true}if(!rejected)throw Error('blank product name was accepted');
+console.log('PASS backup validation: unique SKU and required product names');
