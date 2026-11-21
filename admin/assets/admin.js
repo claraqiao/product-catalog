@@ -36,8 +36,8 @@
   select.addEventListener('change',()=>{chosen=[];$('#photoFiles').value='';$('#photoList').textContent='尚未選擇照片';$('#photoUpload').disabled=true;refreshImages()});
   $('#photoFiles').addEventListener('change',e=>{chosen=[...(e.target.files||[])];$('#photoList').innerHTML=chosen.length?chosen.map(f=>`<div class="photo-file"><span>▣</span><div><b>${esc(f.name)}</b><small>${(f.size/1024).toFixed(0)} KB</small></div></div>`).join(''):'尚未選擇照片';$('#photoUpload').disabled=!chosen.length||!select.value});
   $('#photoUpload').addEventListener('click',async()=>{
-   const pid=select.value;if(!pid||!chosen.length)return;try{await refreshImages()}catch(e){notify('無法確認目前照片數量，請稍後重試：'+e.message);return}if(select.value!==pid){notify('商品已變更，請重新確認照片');return}if(currentImages.length+chosen.length>5){notify(`這款商品已有 ${currentImages.length} 張照片，最多只能再上傳 ${Math.max(0,5-currentImages.length)} 張`);return}
-   const btn=$('#photoUpload'),batch=[...chosen],failed=[];btn.disabled=true;$('#photoProgress').style.width='0%';
+   const pid=select.value,btn=$('#photoUpload');if(!pid||!chosen.length||btn.disabled)return;btn.disabled=true;try{await refreshImages()}catch(e){notify('無法確認目前照片數量，請稍後重試：'+e.message);btn.disabled=false;return}if(select.value!==pid){notify('商品已變更，請重新確認照片');btn.disabled=!chosen.length;return}if(currentImages.length+chosen.length>5){notify(`這款商品已有 ${currentImages.length} 張照片，最多只能再上傳 ${Math.max(0,5-currentImages.length)} 張`);btn.disabled=false;return}
+   const batch=[...chosen],failed=[];$('#photoProgress').style.width='0%';
    for(let i=0;i<batch.length;i++){
     const f=batch[i];$('#photoStatus').textContent=`正在處理第 ${i+1}／${batch.length} 張：${f.name}`;
     try{
