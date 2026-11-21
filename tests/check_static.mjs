@@ -28,3 +28,8 @@ for(const token of ["status='superseded'","WHERE status='pending' AND revision<>
  if(!worker.includes(token))throw Error('Missing publish revision safety: '+token);
  console.log('PASS publish revision safety:',token);
 }
+
+for(const token of ["if(!raw||!env.SESSION_SECRET)return null","declaredSize>3*1024*1024","免費測試版單次照片上傳不可超過 3 MiB"]){
+ if(!worker.includes(token))throw Error('Missing session or upload safety: '+token);
+ console.log('PASS session and upload safety:',token);
+}
