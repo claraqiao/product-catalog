@@ -60,7 +60,7 @@
  async function decodePhoto(file){
   if(typeof createImageBitmap==='function'){try{const bitmap=await createImageBitmap(file);return {image:bitmap,cleanup:()=>bitmap.close?.()}}catch{}}
   const url=URL.createObjectURL(file);
-  try{const img=new Image();img.decoding='async';img.src=url;await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(Error('無法讀取這張照片，請改用 JPG 或 PNG 格式'))});return {image:img,cleanup:()=>URL.revokeObjectURL(url)}}}
+  try{const img=new Image();img.decoding='async';await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(Error('無法讀取這張照片，請改用 JPG 或 PNG 格式'));img.src=url});return {image:img,cleanup:()=>URL.revokeObjectURL(url)}}}
   catch(error){URL.revokeObjectURL(url);throw error}
  }
  async function trialBlob(bitmap,side,quality){while(side>=120){const blob=await canvasBlob(bitmap,side,quality);if(blob.size<=524288)return blob;side=Math.floor(side*.75);quality=Math.max(.45,quality-.08);}throw Error('照片無法壓縮至免費版大小限制');}
