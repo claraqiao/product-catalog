@@ -228,3 +228,9 @@ const storageMigrationBlock=healthSource.slice(healthSource.indexOf("if(path==='
 if(!storageMigrationBlock.includes('legacyTrialObjects')||!storageMigrationBlock.includes('legacyTrialBytes'))throw Error('R2 storage must report legacy D1 image inventory');
 if(!admin.includes('切換到 R2 不會自動搬移'))throw Error('Admin must warn against silent D1 photo loss during R2 migration');
 console.log('PASS legacy D1 photos are disclosed before R2 migration');
+
+const migrationApi=healthSource.slice(healthSource.indexOf("if(path==='/api/admin/storage/migrate'"),healthSource.indexOf("if(path==='/api/admin/bootstrap'"));
+for(const guard of ["requireAdmin(request,env)","b?.confirm!=='COPY_TO_R2'","LIMIT 11","env.IMAGES.head(row.object_key)","env.IMAGES.put(row.object_key","sourcePreserved:true"])if(!migrationApi.includes(guard))throw Error('Safe R2 migration missing: '+guard);
+if(migrationApi.includes('DELETE FROM trial_image_objects'))throw Error('R2 migration must never delete D1 originals');
+if(!admin.includes("'/admin/storage/migrate'")||!admin.includes('複製舊照片至 R2'))throw Error('iPad migration UI missing');
+console.log('PASS confirmed non-destructive D1 to R2 migration');
