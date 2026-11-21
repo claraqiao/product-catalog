@@ -150,3 +150,8 @@ console.log('PASS admin gallery escapes image attributes and lazy-loads thumbnai
 const galleryMutations=admin.slice(admin.indexOf('async function refreshImages()'),admin.indexOf("select.addEventListener('change'"));
 if(!admin.includes('galleryMutationPending=false')||galleryMutations.split('if(galleryMutationPending)return').length<3||galleryMutations.split('finally{galleryMutationPending=false}').length<3)throw Error('Gallery reorder/delete must serialize mutations and always release lock');
 console.log('PASS gallery reorder and delete operations serialize concurrent edits');
+
+const concurrentPhotoOps=admin.slice(admin.indexOf('let chosen=[],currentImages=[]'),admin.indexOf('async function decodePhoto(file)'));
+if(!concurrentPhotoOps.includes('photoBatchPending=false')||concurrentPhotoOps.split('galleryMutationPending||photoBatchPending').length<4)throw Error('Photo mutations and uploads must not overlap');
+if(!concurrentPhotoOps.includes("btn.disabled=false;photoBatchPending=false;return"))throw Error('Photo batch lock must release on early validation failure');
+console.log('PASS photo upload and gallery mutations cannot overlap and early validation unlocks');
