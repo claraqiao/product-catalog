@@ -46,3 +46,8 @@ for(const token of ["'#product='+encodeURIComponent(p.sku)","decodeURIComponent(
  if(!catalog.includes(token))throw Error('Missing shareable product link: '+token);
 }
 console.log('PASS shareable product SKU links and browser navigation');
+
+const homepage=fs.readFileSync(new URL('index.html',root),'utf8');
+for(const token of ['id="share-product"','id="share-status"'])if(!homepage.includes(token))throw Error('Missing sharing UI '+token);
+for(const token of ['navigator.share({title:active.name||active.sku,url})','navigator.clipboard.writeText(url)',"addEventListener('click',()=>closeViewer())"])if(!catalog.includes(token))throw Error('Missing sharing or close behavior '+token);
+console.log('PASS product sharing UI, native share, clipboard fallback and close event');
