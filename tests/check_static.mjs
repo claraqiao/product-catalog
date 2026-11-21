@@ -255,3 +255,10 @@ if(!healthSource.includes("if(path==='/api/admin/backup/manifest'&&method==='GET
 if(!healthSource.includes("r2MigrationEnabled:env.ALLOW_R2_MIGRATION==='true'"))throw Error('Migration permission flag missing');
 if(!admin.includes('migrate.disabled=!data.r2MigrationEnabled'))throw Error('iPad R2 migration button must default disabled');
 console.log('PASS backup inventory and free-first migration UI');
+
+for(const route of ["/api/admin/backup/tables","/api/admin/backup/images"])if(!healthSource.includes("if(path==='"+route+"'&&method==='GET')"))throw Error('Backup route missing: '+route);
+if(!healthSource.includes("format:'catalog-v12-tables-only'")||!healthSource.includes("format:'catalog-v12-d1-photo-batch'"))throw Error('Partial backups must have distinct formats');
+if(!healthSource.includes('restorable:false'))throw Error('Partial backups must not claim restore capability');
+if(!admin.includes('下載商品資料 JSON'))throw Error('iPad metadata backup link missing');
+if(!healthSource.includes('await r2.delete(key);await legacy.delete(key)'))throw Error('Deleting an image must also remove legacy fallback copy');
+console.log('PASS bounded partial backup exports and legacy delete semantics');
