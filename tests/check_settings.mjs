@@ -37,3 +37,7 @@ assert.match(worker,/paidStorageEnabled:false/);
 assert.match(admin,/async function storageStatus/);
 assert.match(admin,/storageStatus\\(\\)/);
 console.log('PASS authenticated quota reporting and dashboard indicator');
+
+assert.match(worker,/headers.set\('x-robots-tag',allowIndex\?'index, follow':'noindex, nofollow'\)/);
+assert.match(worker,/settings\?\.noindex==='false'/);
+console.log('PASS public homepage indexing controlled by confirmed published settings');
