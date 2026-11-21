@@ -199,7 +199,17 @@ export default {async fetch(request,env){if(!env.IMAGES&&env.DB)env={...env,IMAG
   if(path==='/catalog/settings.json'&&method==='GET'){const row=await env.DB.prepare('SELECT payload_json FROM published_catalog WHERE id=1').first();let settings={};try{settings=JSON.parse(row?.payload_json||'{}').settings||{}}catch{}return json(settings,200,{'cache-control':'public, max-age=60'});}
   if(path==='/catalog/products.json'&&method==='GET'){const row=await env.DB.prepare('SELECT payload_json FROM published_catalog WHERE id=1').first();let products=[];try{products=JSON.parse(row?.payload_json||'{"products":[]}').products||[]}catch{}products=products.map(p=>({...p,images:(p.images||[]).map(im=>({src:im.src,thumb:im.thumb,alt:im.alt}))}));return json(products,200,{'cache-control':'public, max-age=60','x-robots-tag':'noindex'});}
   if(path.startsWith('/api/admin/'))return fail('Not found',404);
-  if(env.ASSETS){if(path==='/admin'||path==='/admin/')return env.ASSETS.fetch(new Request(new URL('/admin/index.html',request.url),request));return env.ASSETS.fetch(request);}
+  if(env.ASSETS){
+    if(path==='/admin'||path==='/admin/')return env.ASSETS.fetch(new Request(new URL('/admin/index.html',request.url),request));
+    const response=await env.ASSETS.fetch(request);
+    if((path==='/'||path==='/index.html')&&response.ok){
+     const row=await env.DB.prepare('SELECT payload_json FROM published_catalog WHERE id=1').first();
+     let allowIndex=false;try{allowIndex=JSON.parse(row?.payload_json||'{}').settings?.noindex==='false'}catch{}
+     const headers=new Headers(response.headers);headers.set('x-robots-tag',allowIndex?'index, follow':'noindex, nofollow');
+     return new Response(response.body,{status:response.status,statusText:response.statusText,headers});
+    }
+    return response;
+   }
   return new Response('Not found',{status:404});
  }catch(e){return fail('伺服器處理失敗：'+e.message,500)}
 }};
