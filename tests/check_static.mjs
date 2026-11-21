@@ -110,3 +110,9 @@ console.log('PASS Safari image load handlers registered before source assignment
 const uploadHandler=admin.slice(admin.indexOf("$('#photoUpload').addEventListener('click'"),admin.indexOf('async function decodePhoto(file)'));
 if(!uploadHandler.includes('await refreshImages()')||uploadHandler.includes('await load()')||!uploadHandler.includes("btn.textContent=chosen.length?'重新上傳失敗照片'"))throw Error('Photo upload retry must preserve chosen files without rerendering admin');
 console.log('PASS photo upload keeps failed selections and retry button after refreshing gallery');
+
+const photoManager=admin.slice(admin.indexOf('async function refreshImages()'),admin.indexOf('async function decodePhoto(file)'));
+if(!photoManager.includes('currentProduct.photos=currentImages.length'))throw Error('Photo gallery count must sync after changes');
+const deletion=photoManager.slice(photoManager.indexOf("notify('照片已刪除')"),photoManager.indexOf("notify('照片已刪除')")+130);
+if(!deletion.includes('await refreshImages()')||deletion.includes('await load()'))throw Error('Deleting a photo must not reset pending uploads');
+console.log('PASS photo deletion keeps pending upload selections and updates product photo count');
