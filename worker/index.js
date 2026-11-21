@@ -121,7 +121,7 @@ function imageStoreWithLegacyFallback(r2,db){
  return {
   ...r2,
   put:(...args)=>r2.put(...args),
-  delete:(...args)=>r2.delete(...args),
+  async delete(key){await r2.delete(key);await legacy.delete(key)},
   list:(...args)=>r2.list(...args),
   async get(key){return await r2.get(key)||await legacy.get(key)},
   async head(key){return await r2.head(key)||await legacy.head(key)}
