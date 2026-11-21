@@ -169,7 +169,7 @@ export default {async fetch(request,env){if(!env.IMAGES&&env.DB)env={...env,IMAG
    if(!await requireAdmin(request,env))return fail('Unauthorized',401);
    if(!env.IMAGES_R2||env.IMAGES_IS_TRIAL)return fail('尚未配置 R2',409);
    const cursor=url.searchParams.get('cursor')||'';
-   if(cursor.length>512)return fail('游標長度不正確',422);
+   if(cursor.length>512||cursor.includes('\\0'))return fail('游標長度或內容不正確',422);
    const total=await env.DB.prepare('SELECT COUNT(*) AS count FROM trial_image_objects').first();
    const {results=[]}=await env.DB.prepare('SELECT object_key,size_bytes,data FROM trial_image_objects WHERE object_key>? ORDER BY object_key LIMIT 21').bind(cursor).all();
    const batch=results.slice(0,20),mismatches=[];let verified=0;
