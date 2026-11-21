@@ -41,3 +41,8 @@ console.log('PASS authenticated quota reporting and dashboard indicator');
 assert.match(worker,/headers.set\('x-robots-tag',allowIndex\?'index, follow':'noindex, nofollow'\)/);
 assert.match(worker,/settings\?\.noindex==='false'/);
 console.log('PASS public homepage indexing controlled by confirmed published settings');
+
+assert.match(site,/settings.logo_url/);
+assert.match(site,/logo.referrerPolicy='no-referrer'/);
+assert.match(worker,/key==='logo_url'&&u.protocol!=='https:'/);
+console.log('PASS published logo with HTTPS and referrer protections');
