@@ -263,7 +263,7 @@ if(!admin.includes('下載商品資料 JSON'))throw Error('iPad metadata backup 
 if(!healthSource.includes('await r2.delete(key);await legacy.delete(key)'))throw Error('Deleting an image must also remove legacy fallback copy');
 console.log('PASS bounded partial backup exports and legacy delete semantics');
 
-if(!admin.includes("id=\\\"backupPhotoBatch\\\"")||!admin.includes("'/api/admin/backup/images?cursor='"))throw Error('iPad batch photo backup download missing');
+if(!admin.includes('id="backupPhotoBatch"')||!admin.includes("'/api/admin/backup/images?cursor='"))throw Error('iPad batch photo backup download missing');
 if(!admin.includes('result.nextCursor===nextCursor')||!admin.includes('result.hasMore'))throw Error('iPad photo backup must detect stalled cursors');
 if(!healthSource.includes('exportedCount:images.length'))throw Error('Photo backup batch count missing');
 console.log('PASS iPad photo batch downloads and progress guards');
