@@ -6,3 +6,5 @@
 .brand{display:flex;align-items:center;gap:10px;min-width:0}.brand .site-logo{display:block;width:38px;height:38px;object-fit:contain;flex:none}.brand a{overflow:hidden;text-overflow:ellipsis}
 
 .load-more{display:block;margin:24px auto 32px;padding:12px 24px;border:1px solid var(--brand);border-radius:10px;background:#fff;color:var(--brand);font:inherit;font-weight:650;cursor:pointer}.load-more[hidden]{display:none}.load-more:focus-visible{outline:3px solid var(--brand);outline-offset:3px}
+
+#share-product{font:inherit;font-size:14px;border:1px solid #aaa;border-radius:8px;background:#fff;color:#222;padding:7px 11px;cursor:pointer}#share-product:focus-visible{outline:3px solid #fff;outline-offset:3px}#share-status{font-size:13px} .view-meta{align-items:center;gap:10px;flex-wrap:wrap}
