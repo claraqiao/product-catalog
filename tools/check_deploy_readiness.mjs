@@ -37,8 +37,11 @@ for(const entry of ['.dev.vars','.env','site_dist/','.wrangler/']){
  if(!ignore.split(/\r?\n/).includes(entry))throw Error('Missing .gitignore protection: '+entry);
  console.log('PASS ignored local file:',entry);
 }
-const migrations=fs.readdirSync(path.join(root,'migrations')).filter(x=>/^\d+.*\.sql$/.test(x)).sort();
-if(!migrations.length)throw Error('No database migrations');
-for(const file of migrations){if(!read('migrations/'+file).trim())throw Error('Empty migration: '+file)}
+const migrationFiles=fs.readdirSync(path.join(root,'migrations')).filter(x=>x.endsWith('.sql'));
+if(!migrationFiles.length)throw Error('No database migrations');
+for(const file of migrationFiles)if(!/^\d+_[a-zA-Z0-9_-]+\.sql$/.test(file))throw Error('Invalid migration filename: '+file);
+const migrations=migrationFiles.sort();
+const numbers=new Set();
+for(const file of migrations){const number=Number(file.split('_')[0]);if(numbers.has(number))throw Error('Duplicate migration number: '+number);numbers.add(number);if(!read('migrations/'+file).trim())throw Error('Empty migration: '+file)}
 console.log('PASS migrations:',migrations.join(', '));
 console.log('Static deployment readiness checks passed; Cloudflare secrets, migrations applied remotely, live deployment and free-tier usage remain UNVERIFIED.');
