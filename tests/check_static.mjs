@@ -124,3 +124,7 @@ console.log('PASS photo upload checks fresh gallery count and blocks when galler
 const batchStart=admin.slice(admin.indexOf("$('#photoUpload').addEventListener('click'"),admin.indexOf('const batch=[...chosen]',admin.indexOf("$('#photoUpload').addEventListener('click'")));
 if(!batchStart.includes('btn.disabled=true;try{await refreshImages()}')||!batchStart.includes('||btn.disabled)return')||!batchStart.includes('btn.disabled=false;return'))throw Error('Photo batch must lock before asynchronous gallery check and unlock on validation failure');
 console.log('PASS photo upload prevents duplicate submissions during capacity checks');
+
+const photoBatchLock=admin.slice(admin.indexOf('const batch=[...chosen],failed=[]'),admin.indexOf('async function decodePhoto(file)'));
+if(!photoBatchLock.includes("select.disabled=true;$('#photoFiles').disabled=true")||!photoBatchLock.includes("select.disabled=false;$('#photoFiles').disabled=false"))throw Error('Photo batch must lock and unlock product/file selectors');
+console.log('PASS product and photo selection locked during active batch uploads');
