@@ -88,3 +88,8 @@ for(const token of ["if(!o.size||!d.size||!t.size)","o.size+d.size+t.size>3*1024
  if(!worker.includes(token))throw Error('Missing actual photo upload size validation: '+token);
 }
 console.log('PASS reject empty photos and oversized multipart files even without Content-Length');
+
+for(const token of ["Promise.allSettled([env.IMAGES.delete(okey)","/容量已達|單張檔案上限|大小限制|無法壓縮/","return fail(message,status)"]){
+ if(!worker.includes(token))throw Error('Missing upload failure cleanup and quota response: '+token);
+}
+console.log('PASS photo upload failure returns quota-specific error even if cleanup fails');
