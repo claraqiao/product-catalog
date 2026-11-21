@@ -23,7 +23,7 @@ await check('/admin/',[200],'html');
 const health=await check('/api/health',[200],'json');
 const data=await health.json();
 if(data.ok!==true||data.service!=='catalog-api')throw Error('Health response does not identify the catalog API');
-for(const route of ['/api/admin/settings','/api/admin/products','/api/admin/backup/export']){
+for(const route of ['/api/admin/settings','/api/admin/storage','/api/admin/backup/export']){
  const response=await check(route,[401,403],'json');
  const payload=await response.json();
  if(!payload||typeof payload.error!=='string')throw Error(route+': missing access-denied error');
