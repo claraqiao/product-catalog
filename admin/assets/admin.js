@@ -42,7 +42,7 @@
     const f=batch[i];$('#photoStatus').textContent=`正在處理第 ${i+1}／${batch.length} 張：${f.name}`;
     try{
      if(!['image/jpeg','image/png','image/webp'].includes(f.type))throw Error('不支援的格式');if(f.size>15*1024*1024)throw Error('原圖不可超過 15 MB');
-     const bitmap=await createImageBitmap(f);let display,thumb;try{display=await trialBlob(bitmap,1600,.80);thumb=await trialBlob(bitmap,480,.76);}finally{bitmap.close?.();}
+     const decoded=await decodePhoto(f);let display,thumb;try{display=await trialBlob(decoded.image,1600,.80);thumb=await trialBlob(decoded.image,480,.76);}finally{decoded.cleanup();}
      let token=uploadTokens.get(f);if(!token){token=crypto.randomUUID();uploadTokens.set(f,token)}
      const fd=new FormData();fd.append('productId',pid);fd.append('uploadToken',token);fd.append('original',display,`trial-${i}.webp`);fd.append('display',display,`display-${i}.webp`);fd.append('thumb',thumb,`thumb-${i}.webp`);
      await xhrUpload('/api/admin/photos/upload',fd,p=>{const pct=Math.round(((i+p)/batch.length)*100);$('#photoProgress').style.width=pct+'%';$('#photoStatus').textContent=`照片上傳中：${i+1}／${batch.length}（${Math.round(p*100)}%）`});
@@ -56,6 +56,12 @@
    btn.textContent=chosen.length?'重新上傳失敗照片':'確認上傳照片';btn.disabled=!chosen.length;
   });
   if(select.value)refreshImages();
+ }
+ async function decodePhoto(file){
+  if(typeof createImageBitmap==='function'){try{const bitmap=await createImageBitmap(file);return {image:bitmap,cleanup:()=>bitmap.close?.()}}catch{}}
+  const url=URL.createObjectURL(file);
+  try{const img=new Image();img.decoding='async';img.src=url;await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(Error('無法讀取這張照片，請改用 JPG 或 PNG 格式'))});return {image:img,cleanup:()=>URL.revokeObjectURL(url)}}}
+  catch(error){URL.revokeObjectURL(url);throw error}
  }
  async function trialBlob(bitmap,side,quality){while(side>=120){const blob=await canvasBlob(bitmap,side,quality);if(blob.size<=524288)return blob;side=Math.floor(side*.75);quality=Math.max(.45,quality-.08);}throw Error('照片無法壓縮至免費版大小限制');}
  function canvasBlob(bitmap,maxSide,quality){const scale=Math.min(1,maxSide/Math.max(bitmap.width,bitmap.height)),w=Math.max(1,Math.round(bitmap.width*scale)),h=Math.max(1,Math.round(bitmap.height*scale)),canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;canvas.getContext('2d',{alpha:false}).drawImage(bitmap,0,0,w,h);return new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error('照片轉檔失敗')),'image/webp',quality))}
