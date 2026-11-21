@@ -176,3 +176,7 @@ console.log('PASS post-upload photo counts require a confirmed gallery refresh')
 const readiness=fs.readFileSync(new URL('tools/check_deploy_readiness.mjs',root),'utf8');
 for(const token of ['Built asset differs from source','Missing linked asset','Duplicate migration number','Invalid migration filename','Secret must not be stored in','database_id','Static deployment readiness checks passed'])if(!readiness.includes(token))throw Error('Missing deployment readiness safety check: '+token);
 console.log('PASS deployment readiness checks cover build parity and secret safety');
+
+const adminAuth=fs.readFileSync(new URL('worker/index.js',root),'utf8');
+if(!adminAuth.includes("if(!['GET','HEAD','OPTIONS'].includes(request.method)&&!request.headers.get('Origin'))return null"))throw Error('Authenticated admin writes must require Origin header');
+console.log('PASS authenticated admin writes require same-origin request header');
