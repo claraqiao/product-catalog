@@ -1,0 +1,16 @@
+name: Live catalog smoke test
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  live-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Read-only production checks
+        run: node tools/check_live_site.mjs https://product-catalog.clara0189.workers.dev
