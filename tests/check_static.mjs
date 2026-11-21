@@ -51,3 +51,8 @@ const homepage=fs.readFileSync(new URL('index.html',root),'utf8');
 for(const token of ['id="share-product"','id="share-status"'])if(!homepage.includes(token))throw Error('Missing sharing UI '+token);
 for(const token of ['navigator.share({title:active.name||active.sku,url})','navigator.clipboard.writeText(url)',"addEventListener('click',()=>closeViewer())"])if(!catalog.includes(token))throw Error('Missing sharing or close behavior '+token);
 console.log('PASS product sharing UI, native share, clipboard fallback and close event');
+
+if(!worker.includes("o.size>512*1024||d.size>512*1024||t.size>512*1024"))throw Error('Trial upload size check missing');
+const trialAdmin=fs.readFileSync(new URL('admin/assets/admin.js',root),'utf8');
+if(!trialAdmin.includes('不是手機裡的原始檔，請自行保留原始照片'))throw Error('Original photo retention warning missing');
+console.log('PASS trial image limits and accurate original-photo warning');
