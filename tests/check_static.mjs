@@ -77,3 +77,9 @@ for(const token of ["if(e.key==='Tab')","e.shiftKey&&document.activeElement===fi
  if(!catalog.includes(token))throw Error('Missing keyboard focus containment: '+token);
 }
 console.log('PASS photo dialog keyboard focus containment');
+
+if(!homepage.includes('id="image-error" role="status" hidden'))throw Error('Missing photo load error notice');
+for(const token of ["large.addEventListener('error'","large.hidden=true","document.querySelector('#image-error').hidden=false","document.querySelector('#image-error').hidden=true"]){
+ if(!catalog.includes(token))throw Error('Missing photo load error handling '+token);
+}
+console.log('PASS published photo load failure has an accessible fallback message');
