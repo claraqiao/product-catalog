@@ -106,3 +106,7 @@ console.log('PASS iOS photo picker supports supported file extensions when MIME 
 const fallback=admin.slice(admin.indexOf('async function decodePhoto(file)'),admin.indexOf('async function trialBlob(',admin.indexOf('async function decodePhoto(file)')));
 if(fallback.indexOf('img.onload=resolve')<0||fallback.indexOf('img.onload=resolve')>fallback.indexOf('img.src=url'))throw Error('Safari image load handler must be registered before assigning src');
 console.log('PASS Safari image load handlers registered before source assignment');
+
+const uploadHandler=admin.slice(admin.indexOf("$('#photoUpload').addEventListener('click'"),admin.indexOf('async function decodePhoto(file)'));
+if(!uploadHandler.includes('await refreshImages()')||uploadHandler.includes('await load()')||!uploadHandler.includes("btn.textContent=chosen.length?'重新上傳失敗照片'"))throw Error('Photo upload retry must preserve chosen files without rerendering admin');
+console.log('PASS photo upload keeps failed selections and retry button after refreshing gallery');
