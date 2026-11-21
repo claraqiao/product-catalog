@@ -47,7 +47,31 @@ function validateBackup(data){
  return data.summary||{products:data.tables.products.length,categories:data.tables.categories.length,photos:data.tables.product_images.length,imageFiles:data.images.length};
 }
 async function makeSnapshot(env){const {results=[]}=await env.DB.prepare(`SELECT p.id,p.sku,p.name,p.series,p.specification,p.keywords,c.name AS category,i.display_key,i.thumb_key,i.alt_text FROM products p JOIN categories c ON c.id=p.category_id LEFT JOIN product_images i ON i.product_id=p.id WHERE p.status='active' ORDER BY p.sort_order,p.sku,i.sort_order`).all();const map=new Map();for(const r of results){if(!map.has(r.id))map.set(r.id,{sku:r.sku,name:r.name,series:r.series,keywords:r.keywords,category:r.category,specification:r.specification,images:[]});if(r.display_key){if(!r.thumb_key)throw Error('產品 '+r.sku+' 有照片缺少縮圖，請重新處理');map.get(r.id).images.push({src:'/media/'+r.display_key,thumb:'/media/'+r.thumb_key,alt:r.alt_text||r.name,display_key:r.display_key,thumb_key:r.thumb_key})}}const products=[...map.values()];const missing=products.filter(p=>!p.images.length).map(p=>p.sku);if(missing.length)throw Error('以下上架產品尚未加入照片：'+missing.slice(0,30).join('、'));if(products.length&&!env.IMAGES)throw Error('照片儲存服務尚未設定');const keys=products.flatMap(p=>p.images.flatMap(i=>[i.display_key,i.thumb_key]));for(let i=0;i<keys.length;i+=20){const chunk=keys.slice(i,i+20),objects=await Promise.all(chunk.map(k=>env.IMAGES.head(k)));if(objects.some(x=>!x))throw Error('有展示圖或縮圖在儲存服務中不存在，請先修復照片資料')}return {products,published_at:new Date().toISOString()}}
-export default {async fetch(request,env){const url=new URL(request.url),path=url.pathname,method=request.method;
+// Bounded D1 storage adapter for the no-billing trial.
+function trialImages(db) {
+ const lookup=key=>db.prepare('SELECT content_type,size_bytes,data FROM trial_image_objects WHERE object_key=?').bind(key).first();
+ return {
+  async put(key,stream,options={}) {
+   const bytes=await new Response(stream).arrayBuffer();
+   if(!bytes.byteLength||bytes.byteLength>524288) throw Error('免費測試版單張檔案上限 512 KiB，請先壓縮照片');
+   await db.prepare('INSERT INTO trial_image_objects(object_key,content_type,size_bytes,data) VALUES(?,?,?,?)').bind(key,options.httpMetadata?.contentType||'application/octet-stream',bytes.byteLength,bytes).run();
+  },
+  async get(key) {
+   const row=await lookup(key); if(!row)return null;
+   const bytes=new Uint8Array(row.data);
+   return {body:bytes,httpMetadata:{contentType:row.content_type},arrayBuffer:async()=>bytes.buffer};
+  },
+  async head(key){return db.prepare('SELECT object_key FROM trial_image_objects WHERE object_key=?').bind(key).first();},
+  async delete(key){await db.prepare('DELETE FROM trial_image_objects WHERE object_key=?').bind(key).run();},
+  async list({prefix='',cursor='',limit=500}={}){
+   const n=Math.min(500,Math.max(1,limit));
+   const {results=[]}=await db.prepare('SELECT object_key FROM trial_image_objects WHERE substr(object_key,1,length(?))=? AND object_key>? ORDER BY object_key LIMIT ?').bind(prefix,prefix,cursor,n+1).all();
+   const objects=results.slice(0,n).map(r=>({key:r.object_key}));
+   return {objects,truncated:results.length>n,cursor:objects.at(-1)?.key};
+  }
+ };
+}
+export default {async fetch(request,env){if(!env.IMAGES&&env.DB)env={...env,IMAGES:trialImages(env.DB)};const url=new URL(request.url),path=url.pathname,method=request.method;
  try{
   if(path==='/api/health'&&method==='GET')return json({ok:true,service:'catalog-api'});
   if(path==='/api/login'&&method==='POST'){if(!sameOrigin(request)||!request.headers.get('Origin'))return fail('來源驗證失敗',403);const b=await body(request);if(!b||typeof b.username!=='string'||typeof b.password!=='string')return fail('請輸入帳號與密碼');if(!env.SESSION_SECRET||!env.ADMIN_PASSWORD_HASH)return fail('管理者安全設定尚未完成',503);const username=env.ADMIN_USERNAME||'admin',now=Math.floor(Date.now()/1000);let limit=await env.DB.prepare('SELECT attempts,window_started,locked_until FROM admin_rate_limits WHERE username=?').bind(username).first();if(limit&&limit.locked_until>now)return fail('登入嘗試過多，請稍後再試',429);if(limit&&now-limit.window_started>900){await env.DB.prepare('DELETE FROM admin_rate_limits WHERE username=?').bind(username).run();limit=null}const valid=b.username===username&&await verifyPassword(b.password,env.ADMIN_PASSWORD_HASH);if(!valid){const attempts=(limit?.attempts||0)+1,windowStarted=limit?.window_started||now,lockedUntil=attempts>=5?now+900:0;await env.DB.prepare(`INSERT INTO admin_rate_limits(username,attempts,window_started,locked_until) VALUES(?,?,?,?) ON CONFLICT(username) DO UPDATE SET attempts=excluded.attempts,window_started=excluded.window_started,locked_until=excluded.locked_until`).bind(username,attempts,windowStarted,lockedUntil).run();return fail('帳號或密碼不正確',401)}await env.DB.prepare('DELETE FROM admin_rate_limits WHERE username=?').bind(username).run();const token=await issueSession(env,username);return json({ok:true},200,{'set-cookie':cookie(token)})}
