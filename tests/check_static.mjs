@@ -239,3 +239,8 @@ const migrationVerify=healthSource.slice(healthSource.indexOf("if(path==='/api/a
 for(const part of ['requireAdmin(request,env)','SHA-256','LIMIT 21','mismatches','nextCursor','hasMore'])if(!migrationVerify.includes(part))throw Error('Migration verification missing '+part);
 if(!admin.includes('核對全部舊照片')||!admin.includes('/admin/storage/migration-status?cursor='))throw Error('iPad migration verification UI missing');
 console.log('PASS paginated SHA-256 verification for legacy photo migration');
+
+if(!healthSource.includes('imageStoreWithLegacyFallback(env.IMAGES,env.DB)'))throw Error('Legacy photo read-through fallback missing');
+if(!healthSource.includes('IMAGES_R2:env.IMAGES'))throw Error('Raw R2 binding must remain available for independent migration verification');
+if(!healthSource.includes('if(env.IMAGES_R2){const legacy='))throw Error('Mixed-store backup must fail safely');
+console.log('PASS D1 legacy read-through and independent R2 verification');
