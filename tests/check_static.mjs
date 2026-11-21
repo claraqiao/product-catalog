@@ -146,3 +146,7 @@ console.log('PASS out-of-order gallery requests and stale upload capacity checks
 const safeGallery=admin.slice(admin.indexOf('async function refreshImages()'),admin.indexOf("select.addEventListener('change'"));
 if(!safeGallery.includes('src="${esc(im.preview)}"')||!safeGallery.includes('loading="lazy"')||!safeGallery.includes('data-delete-image="${esc(String(im.id))}"'))throw Error('Admin gallery must escape image attributes and lazy-load thumbnails');
 console.log('PASS admin gallery escapes image attributes and lazy-loads thumbnails');
+
+const galleryMutations=admin.slice(admin.indexOf('async function refreshImages()'),admin.indexOf("select.addEventListener('change'"));
+if(!admin.includes('galleryMutationPending=false')||galleryMutations.split('if(galleryMutationPending)return').length<3||galleryMutations.split('finally{galleryMutationPending=false}').length<3)throw Error('Gallery reorder/delete must serialize mutations and always release lock');
+console.log('PASS gallery reorder and delete operations serialize concurrent edits');
