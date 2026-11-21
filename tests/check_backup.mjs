@@ -9,7 +9,7 @@ const context={base64ToBytes:value=>Uint8Array.from(Buffer.from(value,'base64'))
 vm.createContext(context);
 vm.runInContext(helper+'; this.validateBackup=validateBackup;',context);
 const keys=['private/originals/7/a.jpg','public/display/7/a.webp','public/thumb/7/a.webp'];
-const make=()=>({format:'catalog-v12-backup',version:1,tables:{categories:[],products:[],product_images:[{original_key:keys[0],display_key:keys[1],thumb_key:keys[2]}],publish_revisions:[],published_catalog:[],published_media:[],audit_log:[],app_settings:[],photo_upload_requests:[]},images:keys.map((key,i)=>({key,type:i===0?'image/jpeg':'image/webp',data:'aGVsbG8='}))});
+const make=()=>({format:'catalog-v12-backup',version:1,tables:{categories:[],products:[],product_images:[{original_key:keys[0],display_key:keys[1],thumb_key:keys[2]}],publish_revisions:[],published_catalog:[],published_media:[],audit_log:[],app_settings:[],photo_upload_requests:[]},images:keys.map((key,i)=>({key,type:i===0?'image/jpeg':'image/webp',data:Buffer.from(i===0?[255,216,255,217]:[82,73,70,70,0,0,0,0,87,69,66,80]).toString('base64')}))});
 const good=make();
 const result=context.validateBackup(good);
 if(result.photos!==1)throw Error('valid backup photo count mismatch');
@@ -22,3 +22,9 @@ rejected=false;try{context.validateBackup(bad64)}catch{rejected=true}if(!rejecte
 console.log('PASS backup validation: all 3 photo objects required');
 console.log('PASS backup validation: duplicate keys rejected');
 console.log('PASS backup validation: invalid Base64 rejected');
+
+const corrupted=make();corrupted.images[1].data=Buffer.from('not-webp').toString('base64');
+rejected=false;try{context.validateBackup(corrupted)}catch{rejected=true}if(!rejected)throw Error('corrupted WebP was not rejected');
+const missingPublished=make();missingPublished.tables.published_media.push({image_key:'public/display/7/missing.webp'});
+rejected=false;try{context.validateBackup(missingPublished)}catch{rejected=true}if(!rejected)throw Error('missing published photo was not rejected');
+console.log('PASS backup validation: image signatures and published media references checked');
