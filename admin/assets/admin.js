@@ -53,7 +53,7 @@
    chosen=failed;$('#photoFiles').value='';$('#photoList').innerHTML=chosen.length?chosen.map(f=>`<div class="photo-file"><span>⚠</span><div><b>${esc(f.name)}</b><small>尚未成功，可再次按上傳重試</small></div></div>`).join(''):'尚未選擇照片';
    if(failed.length){$('#photoStatus').textContent=`${batch.length-failed.length} 張成功，${failed.length} 張失敗；按「重新上傳失敗照片」即可只重試失敗項目。`;notify('部分照片未完成，失敗照片已保留')}
    else{$('#photoStatus').textContent=`全部 ${batch.length} 張照片已上傳完成`;notify('照片已全部上傳')}
-   try{await refreshImages();const current=products.find(p=>String(p.id)===pid);if(current)current.photos=currentImages.length;}catch(e){notify('照片清單更新失敗：'+e.message)}
+   try{const refreshed=await refreshImages();if(refreshed!==true)throw Error('照片清單未能確認更新');const current=products.find(p=>String(p.id)===pid);if(current)current.photos=currentImages.length;}catch(e){notify('照片清單更新失敗，請重新選擇商品確認照片：'+e.message)}
    select.disabled=false;$('#photoFiles').disabled=false;btn.textContent=chosen.length?'重新上傳失敗照片':'確認上傳照片';btn.disabled=!chosen.length;photoBatchPending=false;
   });
   if(select.value)refreshImages().catch(e=>notify('無法載入照片清單：'+e.message));
