@@ -20,3 +20,5 @@
 ## 上線後唯讀檢查
 
 部署完成後，可以執行 `node tools/check_live_site.mjs https://product-catalog.clara0189.workers.dev`，檢查首頁、管理頁、健康檢查，以及未登入時管理 API 是否拒絕存取。此指令不登入、不修改資料，也不會部署；成功不代表照片上傳或發布功能已驗收。
+
+若只有 iPad／手機、沒有本機 Node.js，也可在 GitHub 專案的 **Actions → Live catalog smoke test → Run workflow** 手動執行相同的唯讀檢查。這個工作流程**不會部署網站**，且若 Worker 尚未上線會顯示失敗；請勿將失敗解讀為商品資料遭修改。
