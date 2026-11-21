@@ -96,3 +96,6 @@ console.log('PASS photo upload failure returns quota-specific error even if clea
 
 for(const token of ['async function decodePhoto(file)','typeof createImageBitmap','URL.createObjectURL(file)','URL.revokeObjectURL(url)','await decodePhoto(f)','decoded.cleanup()']){if(!admin.includes(token))throw Error('Missing iOS photo decode fallback: '+token)}
 console.log('PASS iPad/iPhone photo decoding fallback and URL cleanup');
+
+if(!admin.includes("b.type!=='image/webp'")||!admin.includes('目前瀏覽器無法輸出 WebP 照片'))throw Error('Missing Safari WebP output validation');
+console.log('PASS Safari photo upload rejects unsupported WebP encoding before sending');
