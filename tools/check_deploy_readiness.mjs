@@ -15,7 +15,14 @@ for(const [pattern,label] of expected){if(!pattern.test(config))throw Error('Dep
 for(const file of ['index.html','admin/index.html','admin/assets/admin.js','admin/assets/admin.css','assets/site.js','assets/site.css','password-setup/index.html']){
  const source=path.join(root,'site_dist',file);
  if(!fs.existsSync(source)||fs.statSync(source).size===0)throw Error('Missing/empty built asset: '+file);
+ const original=file.startsWith('assets/')?'public/'+file:file;
+ if(!fs.readFileSync(source).equals(fs.readFileSync(path.join(root,original))))throw Error('Built asset differs from source: '+file);
  console.log('PASS asset',file);
+}
+for(const file of ['wrangler.toml','wrangler.toml.example']){
+ const content=read(file);
+ if(/^\s*(ADMIN_PASSWORD_HASH|SESSION_SECRET|CLOUDFLARE_API_TOKEN)\s*=/m.test(content))throw Error('Secret must not be stored in '+file);
+ console.log('PASS no embedded secrets in',file);
 }
 const migrations=fs.readdirSync(path.join(root,'migrations')).filter(x=>/^\d+.*\.sql$/.test(x)).sort();
 if(!migrations.length)throw Error('No database migrations');
