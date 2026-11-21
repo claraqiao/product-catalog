@@ -116,3 +116,7 @@ if(!photoManager.includes('currentProduct.photos=currentImages.length'))throw Er
 const deletion=photoManager.slice(photoManager.indexOf("notify('照片已刪除')"),photoManager.indexOf("notify('照片已刪除')")+130);
 if(!deletion.includes('await refreshImages()')||deletion.includes('await load()'))throw Error('Deleting a photo must not reset pending uploads');
 console.log('PASS photo deletion keeps pending upload selections and updates product photo count');
+
+const uploadGuard=admin.slice(admin.indexOf("$('#photoUpload').addEventListener('click'"),admin.indexOf('const btn=',admin.indexOf("$('#photoUpload').addEventListener('click'")));
+if(!uploadGuard.includes('await refreshImages()')||!uploadGuard.includes('currentImages.length+chosen.length>5')||!uploadGuard.includes('無法確認目前照片數量'))throw Error('Photo upload must verify fresh gallery count and fail closed');
+console.log('PASS photo upload checks fresh gallery count and blocks when gallery cannot load');
