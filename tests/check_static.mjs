@@ -213,3 +213,8 @@ console.log('PASS backup page discloses trial limits and missing restore');
 const uploadBatchBody=admin.slice(admin.indexOf('const batch=[...chosen],failed=[]'),admin.indexOf('if(select.value)refreshImages()',admin.indexOf('const batch=[...chosen],failed=[]'));
 if(!uploadBatchBody.includes('finally{select.disabled=false;')||!uploadBatchBody.includes('photoBatchPending=false;}')||!uploadBatchBody.includes('批次上傳處理中斷'))throw Error('Upload controls must recover after unexpected batch error');
 console.log('PASS photo upload controls recover after unexpected error');
+
+const bootstrapHandler=admin.slice(admin.indexOf('async function load()'),admin.indexOf('function showLogin()'));
+if(!bootstrapHandler.includes("else{products=[];categories=[];showLogin();")||!bootstrapHandler.includes('管理功能已暫停'))throw Error('Admin bootstrap failure must fail closed');
+if(bootstrapHandler.includes('products=[];categories=[];showApp()'))throw Error('Admin controls must not appear after bootstrap failure');
+console.log('PASS admin bootstrap fails closed on cloud data error');
