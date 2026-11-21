@@ -33,3 +33,11 @@ for(const token of ["if(!raw||!env.SESSION_SECRET)return null","declaredSize>3*1
  if(!worker.includes(token))throw Error('Missing session or upload safety: '+token);
  console.log('PASS session and upload safety:',token);
 }
+
+const catalog=fs.readFileSync(new URL('public/assets/site.js',root),'utf8');
+const catalogCss=fs.readFileSync(new URL('public/assets/site.css',root),'utf8');
+for(const token of ['visibleCount=80','shown.slice(0,visibleCount)','visibleCount+=80','more.hidden=shown.length<=visibleCount']){
+ if(!catalog.includes(token))throw Error('Missing catalog incremental rendering: '+token);
+}
+if(!catalogCss.includes('.load-more[hidden]'))throw Error('Missing catalog pagination styling');
+console.log('PASS catalog batches limit initial product DOM to 80');
