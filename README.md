@@ -25,4 +25,6 @@
 
 ## 手動部署（尚未執行）
 
-新增 GitHub Actions **Deploy catalog to Cloudflare (manual)**，只在使用者自行進入 Actions、選擇工作流程並輸入 `DEPLOY` 後執行；**不會因 GitHub 程式更新而自動部署**。工作流程使用 GitHub Repository Secrets `CLOUDFLARE_API_TOKEN` 與 `CLOUDFLARE_ACCOUNT_ID`，需事先設定具有 Workers 部署及 D1 權限的 Cloudflare API Token。Token 不應貼入聊天或程式碼。部署工作流程依序執行程式檢查、D1 正式資料庫遷移、Worker 部署、唯讀網站檢查；其中 D1 遷移會修改正式資料庫結構，首次執行前應確認資料庫及備份策略。管理員的三項 Cloudflare Secrets 仍需在 Cloudflare Worker 端獨立設定。工作流程的存在不代表已取得授權、已部署成功或已完成 iPad 驗收。
+新增 GitHub Actions **Deploy catalog to Cloudflare (manual)**，只在使用者自行進入 Actions、選擇工作流程並分別輸入 `DEPLOY` 與 `MIGRATE` 後執行；**不會因 GitHub 程式更新而自動部署**。工作流程使用 GitHub Repository Secrets `CLOUDFLARE_API_TOKEN` 與 `CLOUDFLARE_ACCOUNT_ID`，需事先設定具有 Workers 部署及 D1 權限的 Cloudflare API Token。Token 不應貼入聊天或程式碼。部署工作流程依序執行程式檢查、D1 正式資料庫遷移、Worker 部署、唯讀網站檢查；其中 D1 遷移會修改正式資料庫結構，首次執行前應確認資料庫及備份策略。管理員的三項 Cloudflare Secrets 仍需在 Cloudflare Worker 端獨立設定。工作流程的存在不代表已取得授權、已部署成功或已完成 iPad 驗收。
+
+**資料庫變更保護：** 部署與正式 D1 遷移採雙重確認；兩個確認字串有任何一個不符合，整個部署工作不會執行。請先確認正式資料庫有可用的備份，且已了解目前網站尚未提供一鍵還原功能。此設計不能取代資料庫備份與測試。
