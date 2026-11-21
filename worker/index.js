@@ -71,8 +71,32 @@ function trialImages(db) {
   }
  };
 }
+// One-time, idempotent initialization for the no-computer trial deployment.
+// This creates missing tables without deleting or changing existing product data.
+async function ensureTrialSchema(db) {
+ const ready=await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='trial_image_objects'").first();
+ const core=await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='products'").first();
+ const uploads=await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='photo_upload_requests'").first();
+ if(core&&ready&&uploads)return;
+ const statements=[
+  "CREATE TABLE IF NOT EXISTS categories(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT NOT NULL UNIQUE,parent_id INTEGER REFERENCES categories(id) ON DELETE RESTRICT,sort_order INTEGER NOT NULL DEFAULT 0)",
+  "CREATE TABLE IF NOT EXISTS products(id INTEGER PRIMARY KEY AUTOINCREMENT,sku TEXT NOT NULL UNIQUE,name TEXT NOT NULL,category_id INTEGER NOT NULL REFERENCES categories(id),series TEXT NOT NULL DEFAULT '',specification TEXT NOT NULL DEFAULT '',keywords TEXT NOT NULL DEFAULT '',status TEXT NOT NULL DEFAULT 'draft' CHECK(status IN ('draft','active','archived')),sort_order INTEGER NOT NULL DEFAULT 0,internal_note TEXT NOT NULL DEFAULT '',created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,published_at TEXT)",
+  "CREATE TABLE IF NOT EXISTS product_images(id INTEGER PRIMARY KEY AUTOINCREMENT,product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,original_key TEXT NOT NULL,display_key TEXT NOT NULL DEFAULT '',thumb_key TEXT NOT NULL DEFAULT '',image_hash TEXT NOT NULL DEFAULT '',alt_text TEXT NOT NULL DEFAULT '',sort_order INTEGER NOT NULL DEFAULT 0,is_cover INTEGER NOT NULL DEFAULT 0)",
+  "CREATE TABLE IF NOT EXISTS publish_revisions(id INTEGER PRIMARY KEY AUTOINCREMENT,revision TEXT NOT NULL UNIQUE,created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,status TEXT NOT NULL,deployment_url TEXT NOT NULL DEFAULT '',notes TEXT NOT NULL DEFAULT '',payload_json TEXT NOT NULL DEFAULT '')",
+  "CREATE TABLE IF NOT EXISTS audit_log(id INTEGER PRIMARY KEY AUTOINCREMENT,action TEXT NOT NULL,entity_type TEXT NOT NULL,entity_id TEXT NOT NULL DEFAULT '',details TEXT NOT NULL DEFAULT '',created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)",
+  "CREATE TABLE IF NOT EXISTS app_settings(key TEXT PRIMARY KEY,value TEXT NOT NULL)",
+  "CREATE TABLE IF NOT EXISTS admin_rate_limits(username TEXT PRIMARY KEY,attempts INTEGER NOT NULL DEFAULT 0,window_started INTEGER NOT NULL DEFAULT 0,locked_until INTEGER NOT NULL DEFAULT 0)",
+  "CREATE TABLE IF NOT EXISTS published_catalog(id INTEGER PRIMARY KEY CHECK(id=1),revision TEXT NOT NULL,payload_json TEXT NOT NULL,created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)",
+  "CREATE TABLE IF NOT EXISTS published_media(image_key TEXT PRIMARY KEY)",
+  "CREATE TABLE IF NOT EXISTS photo_upload_requests(token TEXT PRIMARY KEY,product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)",
+  "CREATE TABLE IF NOT EXISTS trial_image_objects(object_key TEXT PRIMARY KEY,content_type TEXT NOT NULL,size_bytes INTEGER NOT NULL,data BLOB NOT NULL)",
+  "INSERT OR IGNORE INTO categories(name,sort_order) VALUES('未分類',0)"
+ ];
+ for(const sql of statements)await db.prepare(sql).run();
+}
 export default {async fetch(request,env){if(!env.IMAGES&&env.DB)env={...env,IMAGES:trialImages(env.DB)};const url=new URL(request.url),path=url.pathname,method=request.method;
  try{
+  if(env.DB)await ensureTrialSchema(env.DB);
   if(path==='/api/health'&&method==='GET')return json({ok:true,service:'catalog-api'});
   if(path==='/api/login'&&method==='POST'){if(!sameOrigin(request)||!request.headers.get('Origin'))return fail('來源驗證失敗',403);const b=await body(request);if(!b||typeof b.username!=='string'||typeof b.password!=='string')return fail('請輸入帳號與密碼');if(!env.SESSION_SECRET||!env.ADMIN_PASSWORD_HASH)return fail('管理者安全設定尚未完成',503);const username=env.ADMIN_USERNAME||'admin',now=Math.floor(Date.now()/1000);let limit=await env.DB.prepare('SELECT attempts,window_started,locked_until FROM admin_rate_limits WHERE username=?').bind(username).first();if(limit&&limit.locked_until>now)return fail('登入嘗試過多，請稍後再試',429);if(limit&&now-limit.window_started>900){await env.DB.prepare('DELETE FROM admin_rate_limits WHERE username=?').bind(username).run();limit=null}const valid=b.username===username&&await verifyPassword(b.password,env.ADMIN_PASSWORD_HASH);if(!valid){const attempts=(limit?.attempts||0)+1,windowStarted=limit?.window_started||now,lockedUntil=attempts>=5?now+900:0;await env.DB.prepare(`INSERT INTO admin_rate_limits(username,attempts,window_started,locked_until) VALUES(?,?,?,?) ON CONFLICT(username) DO UPDATE SET attempts=excluded.attempts,window_started=excluded.window_started,locked_until=excluded.locked_until`).bind(username,attempts,windowStarted,lockedUntil).run();return fail('帳號或密碼不正確',401)}await env.DB.prepare('DELETE FROM admin_rate_limits WHERE username=?').bind(username).run();const token=await issueSession(env,username);return json({ok:true},200,{'set-cookie':cookie(token)})}
   if(path==='/api/logout'&&method==='POST'){if(!sameOrigin(request))return fail('來源驗證失敗',403);return json({ok:true},200,{'set-cookie':cookie('',0)});}
