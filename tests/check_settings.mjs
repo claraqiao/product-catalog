@@ -26,3 +26,8 @@ const scripts=[...setup.matchAll(/<script>([\s\S]*?)<\/script>/g)];
 assert.ok(scripts.length,'Missing password setup script');
 for(const [,source] of scripts)new vm.Script(source);
 console.log('PASS settings API, admin editor and password tool smoke checks');
+
+assert.match(worker,/settingsPending=publicKeys.some/);
+assert.match(worker,/pendingCount:pendingSkus.length\+\(settingsPending\?1:0\)/);
+assert.match(admin,/settingsPending=!!d.settingsPending/);
+console.log('PASS draft settings remain pending until explicit publish');
