@@ -180,3 +180,7 @@ console.log('PASS deployment readiness checks cover build parity and secret safe
 const adminAuth=fs.readFileSync(new URL('worker/index.js',root),'utf8');
 if(!adminAuth.includes("if(!['GET','HEAD','OPTIONS'].includes(request.method)&&!request.headers.get('Origin'))return null"))throw Error('Authenticated admin writes must require Origin header');
 console.log('PASS authenticated admin writes require same-origin request header');
+
+const healthSource=fs.readFileSync(new URL('worker/index.js',root),'utf8');
+if(!healthSource.includes("error:'D1 database binding missing'")||!healthSource.includes("error:'D1 schema not ready'"))throw Error('Health endpoint must fail without D1 binding or product schema');
+console.log('PASS health endpoint validates D1 readiness');
