@@ -18,3 +18,8 @@ for(const token of ["series:obj.series||''","CSV 欄位名稱不可重複","產�
  if(!worker.includes(token))throw Error('Missing catalog import safety: '+token);
  console.log('PASS CSV and product limits:',token);
 }
+
+for(const token of ["const sameProducts=JSON.stringify(prepared.products)===JSON.stringify(current.products)","const sameSettings=JSON.stringify(prepared.settings||{})===JSON.stringify(current.settings||{})","預覽後產品、照片或網站設定已變更","已有較新的公開版本"]){
+ if(!worker.includes(token))throw Error('Missing publish safety: '+token);
+ console.log('PASS publish confirmation guard:',token);
+}
