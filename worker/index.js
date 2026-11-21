@@ -54,6 +54,9 @@ function trialImages(db) {
   async put(key,stream,options={}) {
    const bytes=await new Response(stream).arrayBuffer();
    if(!bytes.byteLength||bytes.byteLength>524288) throw Error('免費測試版單張檔案上限 512 KiB，請先壓縮照片');
+   // Reserve headroom in the free D1 database for product metadata and migrations.
+   const usage=await db.prepare('SELECT COALESCE(SUM(size_bytes),0) AS used FROM trial_image_objects').first();
+   if(Number(usage?.used||0)+bytes.byteLength>200*1024*1024)throw Error('免費測試版照片容量已達 200 MiB 安全上限，請先整理照片；系統不會自動啟用付費儲存');
    await db.prepare('INSERT INTO trial_image_objects(object_key,content_type,size_bytes,data) VALUES(?,?,?,?)').bind(key,options.httpMetadata?.contentType||'application/octet-stream',bytes.byteLength,bytes).run();
   },
   async get(key) {
@@ -174,6 +177,8 @@ export default {async fetch(request,env){if(!env.IMAGES&&env.DB)env={...env,IMAG
    // Keep immutable media referenced by the currently published catalog.
     const referenced=await env.DB.prepare('SELECT image_key FROM published_media WHERE image_key IN (?,?)').bind(row.display_key,row.thumb_key).all();
     const keep=new Set((referenced.results||[]).map(x=>x.image_key));
+    // The source original belongs to a published photo too; retain it for recovery.
+    if(keep.has(row.display_key)||keep.has(row.thumb_key))keep.add(row.original_key);
     await Promise.all([row.original_key,row.display_key,row.thumb_key].filter(k=>k&&!keep.has(k)).map(k=>env.IMAGES.delete(k)));
    const {results=[]}=await env.DB.prepare('SELECT id FROM product_images WHERE product_id=? ORDER BY sort_order,id').bind(row.product_id).all();
    const statements=results.map((x,i)=>env.DB.prepare('UPDATE product_images SET sort_order=?,is_cover=? WHERE id=?').bind(i,i===0?1:0,x.id));if(statements.length)await env.DB.batch(statements);
