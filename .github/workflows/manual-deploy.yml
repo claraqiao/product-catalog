@@ -6,6 +6,10 @@ on:
         description: "Type DEPLOY to confirm production deployment"
         required: true
         type: string
+      confirm_database_migration:
+        description: "Type MIGRATE to approve changes to the production D1 database schema"
+        required: true
+        type: string
 permissions:
   contents: read
 concurrency:
@@ -13,7 +17,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   deploy:
-    if: ${{ inputs.confirm_deploy == 'DEPLOY' }}
+    if: ${{ inputs.confirm_deploy == 'DEPLOY' && inputs.confirm_database_migration == 'MIGRATE' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: production
