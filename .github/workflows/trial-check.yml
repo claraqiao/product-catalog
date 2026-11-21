@@ -16,6 +16,8 @@ jobs:
       - run: node --check worker/index.js
       - run: node --check admin/assets/admin.js
       - run: node --check public/assets/site.js
+      - run: node --check tools/check_live_site.mjs
+      - run: node --check tools/check_deploy_readiness.mjs
       - run: node tools/build_assets.mjs
       - run: node tools/check_deploy_readiness.mjs
       - run: node tests/check_static.mjs
