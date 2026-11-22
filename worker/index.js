@@ -116,18 +116,18 @@ async function ensureTrialSchema(db) {
  ];
  for(const sql of statements)await db.prepare(sql).run();
 }
-function imageStoreWithLegacyFallback(r2,db){
+function imageStoreWithLegacyFallback(r2,db,allowWrites=false){
  const legacy=trialImages(db);
  return {
   ...r2,
-  put:(...args)=>r2.put(...args),
+  put:(...args)=>{if(!allowWrites)throw Error('R2 寫入未啟用；免費優先模式禁止未經同意的 R2 上傳');return r2.put(...args)},
   async delete(key){await r2.delete(key);await legacy.delete(key)},
   list:(...args)=>r2.list(...args),
   async get(key){return await r2.get(key)||await legacy.get(key)},
   async head(key){return await r2.head(key)||await legacy.head(key)}
  };
 }
-export default {async fetch(request,env){if(!env.IMAGES&&env.DB)env={...env,IMAGES:trialImages(env.DB),IMAGES_IS_TRIAL:true};else if(env.IMAGES&&env.DB)env={...env,IMAGES_R2:env.IMAGES,IMAGES:imageStoreWithLegacyFallback(env.IMAGES,env.DB)};const url=new URL(request.url),path=url.pathname,method=request.method;
+export default {async fetch(request,env){if(!env.IMAGES&&env.DB)env={...env,IMAGES:trialImages(env.DB),IMAGES_IS_TRIAL:true};else if(env.IMAGES&&env.DB)env={...env,IMAGES_R2:env.IMAGES,IMAGES:imageStoreWithLegacyFallback(env.IMAGES,env.DB,env.ALLOW_R2_WRITES==='true')};const url=new URL(request.url),path=url.pathname,method=request.method;
  try{
   if(path==='/api/health'&&method==='GET'){if(!env.DB)return json({ok:false,service:'catalog-api',error:'D1 database binding missing'},503);const required=['categories','products','product_images','publish_revisions','audit_log','app_settings','admin_rate_limits','published_catalog','published_media','photo_upload_requests','trial_image_objects'];const schema=await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table'").all();const existing=new Set((schema.results||[]).map(row=>row.name));if(required.some(name=>!existing.has(name)))return json({ok:false,service:'catalog-api',error:'D1 schema not ready'},503);return json({ok:true,service:'catalog-api'});}
   if(env.DB)await ensureTrialSchema(env.DB);
