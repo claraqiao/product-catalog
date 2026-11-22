@@ -188,13 +188,13 @@ export default {async fetch(request,env){if(!env.IMAGES&&env.DB)env={...env,IMAG
   if(path==='/api/admin/photos/audit'&&method==='GET'){
    if(!await requireAdmin(request,env))return fail('Unauthorized',401);
    const raw=url.searchParams.get('after')||'0';
-   if(!/^(0|[1-9][0-9]{0,12})$/.test(raw))return fail('檢查進度格式不正確',422);
+   if(!/^(0|[1-9][0-9]{0,12})$/.test(raw)||!Number.isSafeInteger(Number(raw)))return fail('檢查進度格式不正確',422);
    const after=Number(raw);
    const {results=[]}=await env.DB.prepare('SELECT id,product_id,original_key,display_key,thumb_key FROM product_images WHERE id>? ORDER BY id LIMIT 21').bind(after).all();
    const batch=results.slice(0,20),missing=[];let checked=0;
    for(const photo of batch){
     for(const role of ['original_key','display_key','thumb_key']){
-     const key=photo[role];if(!key)continue;checked++;
+     const key=photo[role];if(!key){missing.push({photoId:photo.id,productId:photo.product_id,role,key:null,reason:'照片欄位缺少檔案路徑'});continue}checked++;
      if(!env.IMAGES||!await env.IMAGES.head(key))missing.push({photoId:photo.id,productId:photo.product_id,role,key});
     }
    }
