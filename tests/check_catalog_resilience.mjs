@@ -62,4 +62,8 @@ for(const [label,source,token] of [
  ['photo retry control',html,'id="retry-photo"'],
  ['photo retry clears failed cache',js,'imageCache.delete(imageSource(active.images[index]))'],
  ['photo retry style',css,'#share-favorites,#retry-photo'],
+ ['gallery favorite button',html,'id="viewer-favorite"'],
+ ['gallery favorite synchronization',js,'function syncViewerFavorite()'],
+ ['gallery favorite toggle',js,"document.querySelector('#viewer-favorite').addEventListener('click'"],
+ ['gallery favorite selected style',css,'#viewer-favorite[aria-pressed="true"]'],
 ]){assert(source.includes(token),label);console.log('PASS',label)}
