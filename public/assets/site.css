@@ -25,3 +25,8 @@
 .sort-label select{font:inherit;background:#fff;color:#27333d;border:1px solid #aab2b9;border-radius:8px;padding:8px 12px;min-height:44px}
 .sort-label select:focus-visible{outline:3px solid var(--brand);outline-offset:3px}
 @media(max-width:767px){.paging-controls{justify-content:space-between;gap:8px}.sort-label select{font-size:16px}}
+
+.view-details{width:100%;max-height:24vh;overflow-y:auto;overflow-wrap:anywhere;display:grid;gap:4px;font-size:14px;line-height:1.5;color:#f1f3f5}
+.detail-line{display:flex;gap:6px;align-items:flex-start}.detail-line strong{flex:none;color:#fff}.detail-line span{white-space:pre-wrap}
+.view-content img{min-height:0;max-height:calc(65vh - 54px)}
+@media(max-width:767px){.view-details{font-size:13px;max-height:27vh}.view-content img{max-height:55vh}}
