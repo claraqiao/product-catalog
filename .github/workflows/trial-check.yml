@@ -23,6 +23,8 @@ jobs:
       - run: node tests/check_static.mjs
       - run: node tests/check_backup.mjs
       - run: node tests/check_settings.mjs
+      - name: Verify Cloudflare Worker bundles without deploying
+        run: npx --yes wrangler@4 deploy --dry-run --outdir /tmp/catalog-worker-dry-run
       - name: Check database migrations locally
         run: |
           python3 - <<'PY'
