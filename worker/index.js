@@ -361,6 +361,7 @@ export default {async fetch(request,env){if(!env.IMAGES&&env.DB)env={...env,IMAG
   const deleteImageMatch=path.match(/^\/api\/admin\/images\/(\d+)$/);
   if(deleteImageMatch&&method==='DELETE'){
    if(!await requireAdmin(request,env))return fail('Unauthorized',401);
+   if(env.IMAGES_R2&&env.ALLOW_R2_WRITES!=='true')return fail('R2 目前為唯讀模式，為避免照片與商品紀錄不一致，禁止刪除照片',409);
    const id=Number(deleteImageMatch[1]),row=await env.DB.prepare('SELECT product_id,original_key,display_key,thumb_key FROM product_images WHERE id=?').bind(id).first();if(!row)return fail('找不到照片',404);
    await env.DB.prepare('DELETE FROM product_images WHERE id=?').bind(id).run();
    // Keep immutable media referenced by the currently published catalog.
