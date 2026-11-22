@@ -20,4 +20,6 @@ await writable.delete('photo');
 assert.deepEqual(calls,['r2-put','r2:photo','d1:photo']);
 assert(worker.includes("ALLOW_R2_WRITES==='true'"),'R2 writes must default to disabled');
 assert(worker.includes('200*1024*1024'),'D1 trial must enforce a capacity ceiling');
+const deleteRoute=worker.slice(worker.indexOf("if(deleteImageMatch&&method==='DELETE')"),worker.indexOf('const originalMatch='));
+assert(deleteRoute.indexOf("env.IMAGES_R2&&env.ALLOW_R2_WRITES!=='true'")<deleteRoute.indexOf("DELETE FROM product_images"),'read-only R2 deletion guard must precede database record deletion');
 console.log('PASS executable R2 read-only safety, opt-in writes, and D1 trial limit checks');
