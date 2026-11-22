@@ -9,6 +9,7 @@
  function toggleFavorite(sku){if(favorites.has(sku))favorites.delete(sku);else favorites.add(sku);persistFavorites();updateFavorites();filter()}
  favoritesOnly.addEventListener('click',()=>{showFavorites=!showFavorites;updateFavorites();filter()});
  updateFavorites();
+ document.querySelector('#share-catalog').addEventListener('click',async()=>{const status=document.querySelector('#catalog-share-status');status.textContent='';const url=location.origin+location.pathname;try{if(navigator.share){await navigator.share({title:document.title,url});return}if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(url);status.textContent='型錄網址已複製';return}status.textContent='請複製瀏覽器網址分享'}catch(e){if(e?.name!=='AbortError')status.textContent='分享未完成，請複製瀏覽器網址'}});
  const imageCache=new Map();
  // Browsing preferences are optional: private mode or disabled storage must not break the catalog.
  const stateKey='catalog-browse-v1';
