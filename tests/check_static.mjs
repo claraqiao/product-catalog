@@ -291,3 +291,8 @@ console.log('PASS atomic free photo quota and 800-photo planning');
 
 if(!admin.includes("format:'catalog-photo-integrity-report'")||!admin.includes("link.download='照片完整性檢查報告_'"))throw Error('Photo integrity audit must export a complete report');
 console.log('PASS downloadable iPad photo integrity report');
+
+if(!worker.includes("if(path==='/api/admin/catalog/audit'&&method==='GET')")||!worker.includes('productsWithoutPhotos')||!worker.includes('photosWithoutThumb'))throw Error('Catalog structure audit route missing');
+if(!admin.includes('id="catalogAudit"')||!admin.includes("api('/admin/catalog/audit')"))throw Error('iPad catalog audit action missing');
+if(!admin.includes('manifest.legacyImages!==exportedFiles')||!admin.includes('completionWarning'))throw Error('Photo backup final file count reconciliation missing');
+console.log('PASS catalog structure audit and backup batch count reconciliation');
