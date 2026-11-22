@@ -4,6 +4,8 @@ if(!base)throw Error('Usage: node tools/check_live_site.mjs https://your-worker.
 const url=new URL(base);
 if(url.protocol!=='https:'||url.username||url.password||url.search||url.hash)throw Error('Use a plain HTTPS site URL without credentials or query parameters');
 const root=url.origin;
+const expectedSha=(process.env.EXPECTED_DEPLOY_SHA||'').trim();
+if(expectedSha&&!/^[0-9a-f]{40}$/.test(expectedSha))throw Error('Invalid EXPECTED_DEPLOY_SHA');
 if(url.pathname!=='/'&&url.pathname!=='')throw Error('Use the site origin only, not an admin or product path');
 
 async function check(route,expected,kind){
@@ -63,5 +65,11 @@ for(const p of products.slice(0,5)){
   if(!response.ok||!(response.headers.get('content-type')||'').startsWith('image/webp'))throw Error('Published photo unavailable or wrong type: '+src+' HTTP '+response.status);
   console.log('PASS published photo',src);
  }
+}
+if(expectedSha){
+ const version=await check('/deployment-version.json',[200],'json');
+ const data=await version.json();
+ if(data.commit!==expectedSha)throw Error('Production deployment is stale: expected '+expectedSha+' but found '+String(data.commit||'missing'));
+ console.log('PASS production commit matches',expectedSha);
 }
 console.log('Read-only live checks passed. Photo uploads, login, publication, D1 storage and iPad usability still require separate testing.');
