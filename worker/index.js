@@ -251,6 +251,21 @@ export default {async fetch(request,env){if(!env.IMAGES&&env.DB)env={...env,IMAG
    ]){const row=await env.DB.prepare(sql).first();counts[label]=Number(row?.n||0)}
    return json({checkedAt:new Date().toISOString(),counts,readyForPublish:counts.productsWithoutPhotos===0&&counts.photosWithoutDisplay===0&&counts.photosWithoutThumb===0&&counts.duplicateSkus===0,note:'僅檢查資料表與照片欄位；照片檔案實際存在與否，請另外執行照片完整性檢查。'});
   }
+  if(path==='/api/admin/backup/preflight'&&method==='GET'){
+   if(!await requireAdmin(request,env))return fail('Unauthorized',401);
+   const names=['categories','products','product_images','publish_revisions','published_catalog','published_media','audit_log','app_settings','photo_upload_requests'],counts={};
+   for(const name of names){const row=await env.DB.prepare('SELECT COUNT(*) AS n FROM '+name).first();counts[name]=Number(row?.n||0)}
+   const storage=await env.DB.prepare('SELECT COUNT(*) AS n,COALESCE(SUM(size_bytes),0) AS bytes,COALESCE(MAX(size_bytes),0) AS max_bytes FROM trial_image_objects').first();
+   const references=await env.DB.prepare("SELECT COUNT(*) AS n FROM (SELECT original_key AS k FROM product_images UNION ALL SELECT display_key FROM product_images UNION ALL SELECT thumb_key FROM product_images)").first();
+   const total=Number(storage?.bytes||0),objects=Number(storage?.n||0),r2=!!env.IMAGES_R2;
+   const warnings=[];
+   if(r2)warnings.push('已設定 R2：目前 D1 分批匯出不包含 R2 照片，不能當成完整備份');
+   if(total>18*1024*1024)warnings.push('照片超過 18 MiB，單一完整備份下載功能無法使用');
+   if(total>200*1024*1024)warnings.push('D1 照片超過應用程式設定的 200 MiB 安全上限');
+   if(Number(storage?.max_bytes||0)>524288)warnings.push('有照片超過 512 KiB 的單檔上限');
+   if(Number(references?.n||0)>objects&& !r2)warnings.push('商品照片參照數大於 D1 檔案數；請執行照片完整性檢查');
+   return json({checkedAt:new Date().toISOString(),tables:counts,d1Images:objects,d1Bytes:total,largestImageBytes:Number(storage?.max_bytes||0),productPhotoReferences:Number(references?.n||0),storageMode:r2?'r2-with-d1-fallback':'d1-trial',singleBackupPossible:!r2&&total<=18*1024*1024,fullRestoreAvailable:false,photoBatchPages:Math.ceil(objects/10),warnings,note:'唯讀備份準備檢查，不會修改資料。分批照片與商品資料必須全部保存；目前尚不能自動還原。'});
+  }
   if(path==='/api/admin/backup/manifest'&&method==='GET'){
    if(!await requireAdmin(request,env))return fail('Unauthorized',401);
    const tables=['categories','products','product_images','publish_revisions','published_catalog','published_media','audit_log','app_settings','photo_upload_requests'];
