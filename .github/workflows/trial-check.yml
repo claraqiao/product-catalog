@@ -20,6 +20,9 @@ jobs:
       - run: node --check tools/check_deploy_readiness.mjs
       - run: node tools/build_assets.mjs
       - run: node tools/check_deploy_readiness.mjs
+      - name: Publish honest release-readiness summary
+        if: always()
+        run: node tools/release_status.mjs
       - run: node tests/check_static.mjs
       - run: node tests/check_spec_baseline.mjs
       - run: node tests/check_photo_transition.mjs
