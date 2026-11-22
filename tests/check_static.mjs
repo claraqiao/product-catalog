@@ -282,3 +282,9 @@ if(!healthSource.includes('ORDER BY object_key LIMIT 11')||!healthSource.include
 if(!admin.includes("sessionStorage.setItem('catalogD1BackupProgress'")||!admin.includes("sessionStorage.removeItem('catalogD1BackupProgress'"))throw Error('iPad photo backup resume/restart controls missing');
 if(!admin.includes('id="backupPhotoReset"'))throw Error('Photo backup must offer explicit restart');
 console.log('PASS resumable 10-photo D1 backup pages and restart control');
+
+if(!worker.includes("INSERT INTO trial_image_objects(object_key,content_type,size_bytes,data) SELECT ?,?,?,? WHERE (SELECT COALESCE(SUM(size_bytes),0) FROM trial_image_objects)+?<=?"))throw Error('Free D1 capacity check must be atomic with insertion');
+if(!worker.includes("Number(inserted.meta?.changes||0)!==1"))throw Error('Failed D1 capacity reservation must reject the upload');
+if(!worker.includes('catalogTargetPhotos:800')||!worker.includes('estimatedTotalBytesFor800:'))throw Error('800-photo capacity estimate missing');
+if(!admin.includes('800 張照片容量試算'))throw Error('iPad must explain 800-photo capacity assumptions');
+console.log('PASS atomic free photo quota and 800-photo planning');
