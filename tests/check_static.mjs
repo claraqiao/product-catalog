@@ -313,3 +313,8 @@ if(!worker.includes("missingD1References:r2?null:missingD1References")||!worker.
 if(!admin.includes('id="tablesVerifyFile"')||!admin.includes("b.format!=='catalog-v12-tables-only'"))throw Error('Downloaded metadata backup validation missing');
 if(worker.includes('/[\\\\x00-\\\\x1f\\\\x7f]/'))throw Error('Control character cursor validation uses incorrectly escaped regex');
 console.log('PASS D1 reference preflight, downloaded metadata validation and safe cursors');
+
+if(!admin.includes('id="backupSetFiles"')||!admin.includes('id="backupSetVerify"')||!admin.includes('catalog-v12-backup-set-audit'))throw Error('Offline complete backup set audit missing');
+if(!admin.includes('有商品找不到所屬分類')||!admin.includes('有照片紀錄找不到所屬商品'))throw Error('Backup set referential validation missing');
+if(!admin.includes("digest!==im.sha256")||!admin.includes('const missing=[...needed].filter'))throw Error('Backup set integrity verification missing');
+console.log('PASS offline complete backup set SHA256 and metadata referential verification');
