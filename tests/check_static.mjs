@@ -36,11 +36,11 @@ for(const token of ["if(!raw||!env.SESSION_SECRET)return null","declaredSize>3*1
 
 const catalog=fs.readFileSync(new URL('public/assets/site.js',root),'utf8');
 const catalogCss=fs.readFileSync(new URL('public/assets/site.css',root),'utf8');
-for(const token of ['visibleCount=80','shown.slice(start,visibleCount)','visibleCount+=80','more.hidden=shown.length<=visibleCount']){
+for(const token of ['visibleCount=48','shown.slice(start,visibleCount)','visibleCount+=48','more.hidden=shown.length<=visibleCount']){
  if(!catalog.includes(token))throw Error('Missing catalog incremental rendering: '+token);
 }
 if(!catalogCss.includes('.load-more[hidden]'))throw Error('Missing catalog pagination styling');
-console.log('PASS catalog batches limit initial product DOM to 80');
+console.log('PASS catalog batches limit initial product DOM to 48');
 
 for(const token of ["'#product='+encodeURIComponent(p.sku)","decodeURIComponent(location.hash.slice(9))","window.addEventListener('popstate',syncProductLink)","window.addEventListener('hashchange',syncProductLink)","filter();syncProductLink();"]){
  if(!catalog.includes(token))throw Error('Missing shareable product link: '+token);
