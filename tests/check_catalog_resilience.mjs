@@ -28,4 +28,11 @@ for(const [label,source,token] of [
  ['photo Home keyboard shortcut',js,"e.key==='Home'"],
  ['photo End keyboard shortcut',js,"e.key==='End'"],
  ['search results announced',html,'aria-live="polite"'],
+ ['browse session persistence',js,"const stateKey='catalog-browse-v1'"],
+ ['safe session restore',js,'function readBrowseState()'],
+ ['saved browsing preferences',js,'saveBrowseState()'],
+ ['clear search and category',js,"clearFilters.textContent='清除搜尋與分類'"],
+ ['clear filter style',css,'.clear-filters[hidden]'],
+ ['catalog data validation',js,"if(!Array.isArray(data))throw Error('invalid catalog')"],
+ ['search specifications',js,'p.specification].map(v=>String(v??\'\'))'],
 ]){assert(source.includes(token),label);console.log('PASS',label)}
