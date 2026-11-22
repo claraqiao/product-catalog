@@ -4,6 +4,9 @@ if(!base)throw Error('Usage: node tools/check_live_site.mjs https://your-worker.
 const url=new URL(base);
 if(url.protocol!=='https:'||url.username||url.password||url.search||url.hash)throw Error('Use a plain HTTPS site URL without credentials or query parameters');
 const root=url.origin;
+if(url.pathname!=='/'&&url.pathname!=='')throw Error('Use the site origin only, not an admin or product path');
+const failures=[];
+
 async function check(route,expected,kind){
  const response=await fetch(root+route,{redirect:'manual',signal:AbortSignal.timeout(15000),headers:{accept:'application/json'}});
  if(!expected.includes(response.status))throw Error(route+': expected '+expected.join('/')+', got HTTP '+response.status);
@@ -20,6 +23,7 @@ async function check(route,expected,kind){
 }
 await check('/',[200],'html');
 await check('/admin/',[200],'html');
+await check('/password-setup/',[200],'html');
 for(const route of ['/assets/site.js','/assets/site.css','/admin/assets/admin.js','/admin/assets/admin.css']){
  const response=await check(route,[200]);
  const body=await response.text();
@@ -35,6 +39,7 @@ for(const route of ['/catalog/products.json','/catalog/settings.json']){
 const health=await check('/api/health',[200],'json');
 const data=await health.json();
 if(data.ok!==true||data.service!=='catalog-api')throw Error('Health response does not identify the catalog API');
+console.log('PASS D1 health and Worker identity');
 for(const route of ['/api/admin/settings','/api/admin/storage','/api/admin/backup/export']){
  const response=await check(route,[401,403],'json');
  const payload=await response.json();
