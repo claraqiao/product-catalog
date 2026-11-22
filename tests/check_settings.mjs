@@ -16,11 +16,11 @@ assert.match(admin,/api\('\/admin\/settings'/);
 assert.match(setup,/PBKDF2/);
 assert.match(setup,/iterations:310000/);
 assert.match(setup,/crypto\.getRandomValues/);
-assert.match(worker,/path==='\\/catalog\\/settings.json'/);
+assert.match(worker,/path==='\/catalog\/settings.json'/);
 assert.match(worker,/return {products,settings,published_at/);
-assert.match(site,/fetch\\('\\/catalog\\/settings.json'/);
+assert.match(site,/fetch\('\/catalog\/settings.json'/);
 assert.match(site,/settings.site_name/);
-assert.match(css,/var\\(--brand\\)/);
+assert.match(css,/var\(--brand\)/);
 assert.match(build,/password-setup\/index\.html/);
 const scripts=[...setup.matchAll(/<script>([\s\S]*?)<\/script>/g)];
 assert.ok(scripts.length,'Missing password setup script');
@@ -32,10 +32,10 @@ assert.match(worker,/pendingCount:pendingSkus.length\+\(settingsPending\?1:0\)/)
 assert.match(admin,/settingsPending=!!d.settingsPending/);
 console.log('PASS draft settings remain pending until explicit publish');
 
-assert.match(worker,/path==='\\/api\\/admin\\/storage'/);
+assert.match(worker,/path==='\/api\/admin\/storage'/);
 assert.match(worker,/paidStorageEnabled:false/);
 assert.match(admin,/async function storageStatus/);
-assert.match(admin,/storageStatus\\(\\)/);
+assert.match(admin,/storageStatus\(\)/);
 console.log('PASS authenticated quota reporting and dashboard indicator');
 
 assert.match(worker,/headers.set\('x-robots-tag',allowIndex\?'index, follow':'noindex, nofollow'\)/);
