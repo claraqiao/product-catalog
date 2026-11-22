@@ -29,6 +29,7 @@ jobs:
       - run: node tests/check_catalog_resilience.mjs
       - run: node tests/check_storage_safety.mjs
       - run: node tests/check_release_gates.mjs
+      - run: node tests/check_admin_live_health.mjs
       - run: node tests/check_csv_security.mjs
       - run: node tests/check_admin_csv_security.mjs
       - run: node tests/check_backup.mjs
