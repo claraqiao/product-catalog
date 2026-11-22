@@ -222,7 +222,7 @@ export default {async fetch(request,env){if(!env.IMAGES&&env.DB)env={...env,IMAG
    const {results=[]}=await env.DB.prepare('SELECT object_key,content_type,size_bytes,data FROM trial_image_objects WHERE object_key>? ORDER BY object_key LIMIT 11').bind(cursor).all();
    const batch=results.slice(0,10),images=[];
    for(const row of batch){const bytes=new Uint8Array(row.data);if(bytes.byteLength!==Number(row.size_bytes))return fail('備份照片資料不完整：'+row.object_key,409);const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))).map(n=>n.toString(16).padStart(2,'0')).join('');images.push({key:row.object_key,type:row.content_type,size:bytes.byteLength,sha256:hash,data:bytesToBase64(bytes)})}
-   return json({format:'catalog-v12-d1-photo-batch',version:1,images,exportedCount:images.length,hasMore:results.length>10,nextCursor:batch.at(-1)?.object_key||cursor,includesR2:false,restorable:false,note:'D1 舊照片分批匯出資料；不包含 R2 照片，需保存全部批次與商品資料才能進行未來還原'});
+   return json({format:'catalog-v12-d1-photo-batch',version:1,startCursor:cursor,images,exportedCount:images.length,hasMore:results.length>10,nextCursor:batch.at(-1)?.object_key||cursor,includesR2:false,restorable:false,note:'D1 舊照片分批匯出資料；不包含 R2 照片，需保存全部批次與商品資料才能進行未來還原'});
   }
   if(path==='/api/admin/catalog/issues'&&method==='GET'){
    if(!await requireAdmin(request,env))return fail('Unauthorized',401);
