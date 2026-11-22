@@ -318,3 +318,6 @@ if(!admin.includes('id="backupSetFiles"')||!admin.includes('id="backupSetVerify"
 if(!admin.includes('有商品找不到所屬分類')||!admin.includes('有照片紀錄找不到所屬商品'))throw Error('Backup set referential validation missing');
 if(!admin.includes("digest!==im.sha256")||!admin.includes('const missing=[...needed].filter'))throw Error('Backup set integrity verification missing');
 console.log('PASS offline complete backup set SHA256 and metadata referential verification');
+
+if(!admin.includes("link.download='商品問題清單_'")||!admin.includes("'.csv'")||!admin.includes("type:'text/csv;charset=utf-8'"))throw Error('Catalog issues must download as readable CSV');
+console.log('PASS iPad-friendly CSV catalog issue export');
