@@ -10,5 +10,7 @@ for(const [label,source,token] of [
  ['error feedback',js,'請檢查網路後重試'],
  ['async thumbnail decode',js,"img.decoding='async'"],
  ['mobile page size style',css,'.page-size-label select'],
+ ['product category on cards',js,"categoryText.textContent=p.category"],
+ ['product category styling',css,'.product-category'],
  ['photo busy indicator',css,'img[aria-busy="true"]'],
 ]){assert(source.includes(token),label);console.log('PASS',label)}
