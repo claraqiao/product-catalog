@@ -1,10 +1,23 @@
-// Read-only storage guards: no database or production bucket is accessed.
+// Execute the storage adapter with mocked R2 and D1. Never touches production data.
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import vm from 'node:vm';
 const worker=readFileSync(new URL('../worker/index.js',import.meta.url),'utf8');
-const guard="if(!allowWrites)throw Error('R2 寫入未啟用；為避免遺失照片，禁止在唯讀模式刪除 R2 或 D1 照片')";
-assert(worker.includes(guard),'R2 read-only mode must block delete before touching legacy D1');
-assert(worker.includes("if(!allowWrites)throw Error('R2 寫入未啟用；免費優先模式禁止未經同意的 R2 上傳')"),'R2 writes must be opt-in');
+const start=worker.indexOf('function imageStoreWithLegacyFallback(');
+const end=worker.indexOf('export default',start);
+assert(start>=0&&end>start,'storage adapter exists');
+const calls=[];
+const legacy={delete:async key=>calls.push('d1:'+key),get:async()=>null,head:async()=>null};
+const factory=vm.runInNewContext(worker.slice(start,end)+'\nimageStoreWithLegacyFallback',{trialImages:()=>legacy});
+const r2={put:async()=>calls.push('r2-put'),delete:async key=>calls.push('r2:'+key),get:async()=>null,head:async()=>null,list:async()=>({objects:[]})};
+const readOnly=factory(r2,{},false);
+assert.throws(()=>readOnly.put('photo',new Uint8Array()),/R2 寫入未啟用/);
+await assert.rejects(()=>readOnly.delete('photo'),/R2 寫入未啟用/);
+assert.deepEqual(calls,[],'read-only adapter must not mutate either storage');
+const writable=factory(r2,{},true);
+await writable.put('photo',new Uint8Array());
+await writable.delete('photo');
+assert.deepEqual(calls,['r2-put','r2:photo','d1:photo']);
 assert(worker.includes("ALLOW_R2_WRITES==='true'"),'R2 writes must default to disabled');
 assert(worker.includes('200*1024*1024'),'D1 trial must enforce a capacity ceiling');
-console.log('PASS R2 read-only photo deletion and write guards');
+console.log('PASS executable R2 read-only safety, opt-in writes, and D1 trial limit checks');
