@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+const source=readFileSync(new URL('../admin/assets/admin.js',import.meta.url),'utf8');
+assert(source.includes('id="liveHealthStatus"'),'dashboard needs visible live check status');
+assert(source.includes('id="refreshLiveHealth"'),'dashboard needs manual retry');
+assert(source.includes("fetch('/api/health'"),'must test deployed Worker and D1');
+assert(source.includes("fetch('/catalog/products.json'"),'must test public products');
+assert(source.includes("fetch('/catalog/settings.json'"),'must test public settings');
+assert(source.includes("status.service!=='catalog-api'"),'must reject unrelated websites');
+assert(source.includes('不能代替照片上傳、備份還原及 iPad 實機驗收'),'must not claim full release from health check');
+console.log('PASS iPad dashboard live readiness checks');
