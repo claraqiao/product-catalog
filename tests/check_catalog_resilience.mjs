@@ -47,4 +47,6 @@ for(const [label,source,token] of [
  ['favorite button',js,"favorite.className='favorite-toggle'"],
  ['favorite selection state',js,"favorite.setAttribute('aria-pressed'"],
  ['favorites touch styles',css,'.favorite-toggle[aria-pressed="true"]'],
+ ['category counts',js,'products.filter(p=>p.category===value).length'],
+ ['favorites empty state',js,'沒有符合條件的收藏商品'],
 ]){assert(source.includes(token),label);console.log('PASS',label)}
