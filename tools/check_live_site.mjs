@@ -44,8 +44,16 @@ for(const route of ['/api/admin/settings','/api/admin/storage','/api/admin/backu
  const payload=await response.json();
  if(!payload||typeof payload.error!=='string')throw Error(route+': missing access-denied error');
 }
-const productsResponse=await fetch(root+'/catalog/products.json',{signal:AbortSignal.timeout(15000)});
+const productsResponse=await fetch(root+'/catalog/products.json',{redirect:'manual',signal:AbortSignal.timeout(15000)});
+if(!productsResponse.ok||!(productsResponse.headers.get('content-type')||'').includes('application/json'))throw Error('Public product recheck failed');
+
 const products=await productsResponse.json();
+const skuSet=new Set();
+for(const p of products){
+ if(!p||typeof p.sku!=='string'||!p.sku.trim()||typeof p.name!=='string'||!p.name.trim()||!Array.isArray(p.images))throw Error('Published catalog has an invalid product record');
+ if(skuSet.has(p.sku))throw Error('Published catalog has duplicate product SKU: '+p.sku);
+ skuSet.add(p.sku);
+}
 for(const p of products.slice(0,5)){
  if(typeof p.sku!=='string'||typeof p.name!=='string'||!Array.isArray(p.images))throw Error('Published product shape invalid');
  for(const im of p.images.slice(0,2)){
