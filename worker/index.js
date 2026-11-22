@@ -224,6 +224,23 @@ export default {async fetch(request,env){if(!env.IMAGES&&env.DB)env={...env,IMAG
    for(const row of batch){const bytes=new Uint8Array(row.data);if(bytes.byteLength!==Number(row.size_bytes))return fail('備份照片資料不完整：'+row.object_key,409);const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))).map(n=>n.toString(16).padStart(2,'0')).join('');images.push({key:row.object_key,type:row.content_type,size:bytes.byteLength,sha256:hash,data:bytesToBase64(bytes)})}
    return json({format:'catalog-v12-d1-photo-batch',version:1,images,exportedCount:images.length,hasMore:results.length>10,nextCursor:batch.at(-1)?.object_key||cursor,includesR2:false,restorable:false,note:'D1 舊照片分批匯出資料；不包含 R2 照片，需保存全部批次與商品資料才能進行未來還原'});
   }
+  if(path==='/api/admin/catalog/audit'&&method==='GET'){
+   if(!await requireAdmin(request,env))return fail('Unauthorized',401);
+   const counts={};
+   for(const [label,sql] of [
+    ['products','SELECT COUNT(*) AS n FROM products'],
+    ['activeProducts','SELECT COUNT(*) AS n FROM products WHERE status=\'active\''],
+    ['productsWithoutPhotos',"SELECT COUNT(*) AS n FROM products p WHERE p.status='active' AND NOT EXISTS (SELECT 1 FROM product_images i WHERE i.product_id=p.id)"],
+    ['photos','SELECT COUNT(*) AS n FROM product_images'],
+    ['photosWithoutDisplay','SELECT COUNT(*) AS n FROM product_images WHERE display_key IS NULL OR display_key=\'\''],
+    ['photosWithoutThumb','SELECT COUNT(*) AS n FROM product_images WHERE thumb_key IS NULL OR thumb_key=\'\''],
+    ['photosWithoutOriginal','SELECT COUNT(*) AS n FROM product_images WHERE original_key IS NULL OR original_key=\'\''],
+    ['duplicateSkus','SELECT COUNT(*) AS n FROM (SELECT sku FROM products GROUP BY sku HAVING COUNT(*)>1)'],
+    ['publishedMedia','SELECT COUNT(*) AS n FROM published_media'],
+    ['d1Files','SELECT COUNT(*) AS n FROM trial_image_objects']
+   ]){const row=await env.DB.prepare(sql).first();counts[label]=Number(row?.n||0)}
+   return json({checkedAt:new Date().toISOString(),counts,readyForPublish:counts.productsWithoutPhotos===0&&counts.photosWithoutDisplay===0&&counts.photosWithoutThumb===0&&counts.duplicateSkus===0,note:'僅檢查資料表與照片欄位；照片檔案實際存在與否，請另外執行照片完整性檢查。'});
+  }
   if(path==='/api/admin/backup/manifest'&&method==='GET'){
    if(!await requireAdmin(request,env))return fail('Unauthorized',401);
    const tables=['categories','products','product_images','publish_revisions','published_catalog','published_media','audit_log','app_settings','photo_upload_requests'];
