@@ -335,3 +335,8 @@ console.log('PASS D1 partial schema repair and R2 opt-in deletion safety');
 if(!worker.includes("products=products.map(p=>({sku:p.sku,name:p.name"))throw Error('Public catalog must explicitly allowlist product fields');
 if(!worker.includes("const safe={};for(const k of ['site_name','site_description'"))throw Error('Public settings must explicitly allowlist fields');
 console.log('PASS public catalog and settings expose only intended storefront fields');
+
+if(!worker.includes("format:'catalog-v12-backup-manifest',version:1"))throw Error('Backup manifest must have a versioned format');
+if(!admin.includes("id=\"backupManifestDownload\"")||!admin.includes("manifestMatch=!!manifest&&keys.size===manifest.legacyImages"))throw Error('Offline backup must reconcile selected photo batches against the manifest');
+if(!admin.includes("complete:!!manifest&&manifestMatch&&chainValid"))throw Error('Offline backup must fail closed without manifest and cursor chain');
+console.log('PASS manifest-based offline backup integrity reconciliation');
