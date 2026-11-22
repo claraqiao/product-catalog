@@ -24,7 +24,7 @@ for(const route of ['/assets/site.js','/assets/site.css','/admin/assets/admin.js
  const response=await check(route,[200]);
  const body=await response.text();
  if(body.length<100)throw Error(route+': static asset appears empty');
- if(/<html[\\s>]/i.test(body.slice(0,200)))throw Error(route+': received HTML instead of expected asset');
+ if(/<html[\s>]/i.test(body.slice(0,200)))throw Error(route+': received HTML instead of expected asset');
 }
 for(const route of ['/catalog/products.json','/catalog/settings.json']){
  const response=await check(route,[200],'json');
@@ -46,7 +46,7 @@ for(const p of products.slice(0,5)){
  if(typeof p.sku!=='string'||typeof p.name!=='string'||!Array.isArray(p.images))throw Error('Published product shape invalid');
  for(const im of p.images.slice(0,2)){
   const src=im.thumb||im.src||im.display;
-  if(typeof src!=='string'||!src.startsWith('/'))throw Error('Published photo path is invalid');
+  if(typeof src!=='string'||!/^\/media\/[A-Za-z0-9._/-]+$/.test(src)||src.includes('..'))throw Error('Published photo path is invalid');
   const response=await fetch(root+src,{redirect:'manual',signal:AbortSignal.timeout(15000)});
   if(!response.ok||!(response.headers.get('content-type')||'').startsWith('image/'))throw Error('Published photo unavailable: '+src+' HTTP '+response.status);
   console.log('PASS published photo',src);
