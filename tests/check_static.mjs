@@ -273,3 +273,7 @@ if(!healthSource.includes("r2WritesEnabled:env.ALLOW_R2_WRITES==='true'"))throw 
 if(!admin.includes('R2 新照片上傳已鎖定'))throw Error('iPad must disclose R2 write lock');
 if(!healthSource.includes("if(path==='/api/admin/photos/audit'&&method==='GET')")||!admin.includes('photoIntegrityAudit'))throw Error('iPad photo integrity audit missing');
 console.log('PASS free-first R2 write guard and catalog photo integrity audit');
+
+if(!healthSource.includes("sha256:hash,data:bytesToBase64(bytes)")||!healthSource.includes("size:bytes.byteLength"))throw Error('Photo backup server must provide per-file checksum and length');
+if(!admin.includes("hash!==photo.sha256")||!admin.includes("bytes.length!==photo.size"))throw Error('iPad must verify backup contents before saving');
+console.log('PASS photo backup SHA-256 end-to-end integrity checks');
