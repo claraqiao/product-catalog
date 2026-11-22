@@ -326,3 +326,8 @@ if(!worker.includes("startCursor:cursor,images,exportedCount"))throw Error('Phot
 if(!admin.includes("segments.push({start:obj.startCursor")||!admin.includes("chainValid=count===segments.length"))throw Error('Offline photo backup must verify every cursor in sequence');
 if(!admin.includes("sequencePlausible:batches>0&&unfinishedBatches===batches-1&&emptyBatches===0&&chainValid"))throw Error('Backup sequence check must fail closed');
 console.log('PASS offline backup cursor chain continuity and fail-closed verification');
+
+if(!worker.includes("if(required.every(name=>existing.has(name)))return"))throw Error('D1 schema must detect all required tables before skipping repair');
+if(!worker.includes("await ensureTrialSchema(env.DB);const required="))throw Error('Health check must initialize D1 schema');
+if(!worker.includes("async delete(key){if(allowWrites)await r2.delete(key);await legacy.delete(key)}"))throw Error('R2 deletion must be gated while D1 cleanup remains available');
+console.log('PASS D1 partial schema repair and R2 opt-in deletion safety');
