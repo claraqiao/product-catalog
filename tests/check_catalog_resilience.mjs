@@ -35,4 +35,8 @@ for(const [label,source,token] of [
  ['clear filter style',css,'.clear-filters[hidden]'],
  ['catalog data validation',js,"if(!Array.isArray(data))throw Error('invalid catalog')"],
  ['search specifications',js,'p.specification].map(v=>String(v??\'\'))'],
+ ['category shortcuts',html,'id="category-shortcuts"'],
+ ['category shortcut navigation',js,'const categoryValues=[...cat.options]'],
+ ['category shortcut selection',js,"b.dataset.category===cat.value"],
+ ['category shortcut touch styles',css,'.category-shortcut[aria-pressed="true"]'],
 ]){assert(source.includes(token),label);console.log('PASS',label)}
