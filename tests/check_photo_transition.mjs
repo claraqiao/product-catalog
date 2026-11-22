@@ -14,7 +14,7 @@ const must=[
  ['loading indication', "large.setAttribute('aria-busy','true')"],
  ['failure message', 'status.hidden=false'],
  ['only neighbor preloads', '[requestedIndex-1,requestedIndex+1]'],
- ['page size matches spec', 'visibleCount=48'],
+ ['page size matches spec', 'for(const n of [24,48])'],
  ['no duplicate prefetch objects', 'loadPhoto(imageSource(p.images[i])).catch(()=>{})'],
 ];
 for(const [name,token] of must){assert(js.includes(token),name+' missing');console.log('PASS',name)}
