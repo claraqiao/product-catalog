@@ -154,7 +154,7 @@ console.log('PASS gallery reorder and delete operations serialize concurrent edi
 
 const concurrentPhotoOps=admin.slice(admin.indexOf('let chosen=[],currentImages=[]'),admin.indexOf('async function decodePhoto(file)'));
 if(!concurrentPhotoOps.includes('photoBatchPending=false')||concurrentPhotoOps.split('galleryMutationPending||photoBatchPending').length<4)throw Error('Photo mutations and uploads must not overlap');
-if(!concurrentPhotoOps.includes("btn.disabled=false;photoBatchPending=false;return"))throw Error('Photo batch lock must release on early validation failure');
+if(!concurrentPhotoOps.includes("btn.disabled=false;select.disabled=false;$('#photoFiles').disabled=false;photoBatchPending=false;return"))throw Error('Photo batch lock must release on early validation failure');
 console.log('PASS photo upload and gallery mutations cannot overlap and early validation unlocks');
 
 const productSwitch=admin.slice(admin.indexOf("select.addEventListener('change',()=>{currentImages=[]"),admin.indexOf("$('#photoFiles').addEventListener('change'"));
