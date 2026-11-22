@@ -308,3 +308,8 @@ if(!worker.includes("if(path==='/api/admin/photos/orphans'&&method==='GET')")||!
 if(!admin.includes('id="backupPreflight"')||!admin.includes('id="orphanPhotoReport"'))throw Error('iPad backup and orphan controls missing');
 if(!worker.includes("reason:'照片欄位缺少檔案路徑'"))throw Error('Missing photo paths must be reported');
 console.log('PASS backup preflight, read-only orphan scan and missing photo path reports');
+
+if(!worker.includes("missingD1References:r2?null:missingD1References")||!worker.includes('SELECT image_key FROM published_media) refs'))throw Error('Backup preflight must check real D1 references');
+if(!admin.includes('id="tablesVerifyFile"')||!admin.includes("b.format!=='catalog-v12-tables-only'"))throw Error('Downloaded metadata backup validation missing');
+if(worker.includes('/[\\\\x00-\\\\x1f\\\\x7f]/'))throw Error('Control character cursor validation uses incorrectly escaped regex');
+console.log('PASS D1 reference preflight, downloaded metadata validation and safe cursors');
