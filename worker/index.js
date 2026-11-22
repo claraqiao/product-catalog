@@ -283,7 +283,7 @@ export default {async fetch(request,env){if(!env.IMAGES&&env.DB)env={...env,IMAG
    const counts={};for(const name of tables){const row=await env.DB.prepare('SELECT COUNT(*) AS n FROM '+name).first();counts[name]=Number(row?.n||0)}
    const legacy=await env.DB.prepare('SELECT COUNT(*) AS n,COALESCE(SUM(size_bytes),0) AS bytes FROM trial_image_objects').first();
    const mode=env.IMAGES_R2?'r2-with-d1-fallback':'d1-trial';
-   return json({created_at:new Date().toISOString(),tables:counts,legacyImages:Number(legacy?.n||0),legacyBytes:Number(legacy?.bytes||0),storageMode:mode,fullBackupAvailable:!env.IMAGES_R2&&Number(legacy?.bytes||0)<=18*1024*1024,restoreAvailable:false,note:'這是資料清單與容量報告，不是完整備份，不能用來還原照片。'});
+   return json({format:'catalog-v12-backup-manifest',version:1,created_at:new Date().toISOString(),tables:counts,legacyImages:Number(legacy?.n||0),legacyBytes:Number(legacy?.bytes||0),storageMode:mode,fullBackupAvailable:!env.IMAGES_R2&&Number(legacy?.bytes||0)<=18*1024*1024,restoreAvailable:false,note:'這是資料清單與容量報告，不是完整備份，不能用來還原照片。'});
   }
   if(path==='/api/admin/backup/export'&&method==='GET'){
    if(!await requireAdmin(request,env))return fail('Unauthorized',401);
