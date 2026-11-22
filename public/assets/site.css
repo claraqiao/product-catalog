@@ -56,3 +56,8 @@
 #favorites-count{display:inline-block;min-width:1.5em;text-align:center}
 .favorite-toggle{margin-top:8px;font-size:14px;width:100%;max-width:160px}
 #favorites-only:focus-visible,.favorite-toggle:focus-visible{outline:3px solid var(--brand);outline-offset:3px}
+
+/* Share the entire catalog via iOS native share sheet */
+#share-catalog{font:inherit;min-height:44px;padding:8px 12px;border:1px solid #aab2b9;border-radius:8px;background:#fff;color:#27333d;cursor:pointer}
+#share-catalog:focus-visible{outline:3px solid var(--brand);outline-offset:3px}
+#catalog-share-status{font-size:13px;color:#27333d}
