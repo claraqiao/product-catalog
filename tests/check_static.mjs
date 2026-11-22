@@ -211,7 +211,7 @@ const backupPageSource=admin.slice(admin.indexOf('function backupPage()'),admin.
 for(const warning of ['18 MiB','800 張照片','還原功能也尚未完成','不要把本網站當成唯一備份'])if(!backupPageSource.includes(warning))throw Error('Backup page missing capacity/safety warning: '+warning);
 console.log('PASS backup page discloses trial limits and missing restore');
 
-const uploadBatchBody=admin.slice(admin.indexOf('const batch=[...chosen],failed=[]'),admin.indexOf('if(select.value)refreshImages()',admin.indexOf('const batch=[...chosen],failed=[]'));
+const uploadBatchBody=admin.slice(admin.indexOf('const batch=[...chosen],failed=[]'),admin.indexOf('if(select.value)refreshImages()',admin.indexOf('const batch=[...chosen],failed=[]')));
 if(!uploadBatchBody.includes('finally{select.disabled=false;')||!uploadBatchBody.includes('photoBatchPending=false;}')||!uploadBatchBody.includes('批次上傳處理中斷'))throw Error('Upload controls must recover after unexpected batch error');
 console.log('PASS photo upload controls recover after unexpected error');
 
