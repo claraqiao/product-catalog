@@ -39,4 +39,12 @@ for(const [label,source,token] of [
  ['category shortcut navigation',js,'const categoryValues=[...cat.options]'],
  ['category shortcut selection',js,"b.dataset.category===cat.value"],
  ['category shortcut touch styles',css,'.category-shortcut[aria-pressed="true"]'],
+ ['favorites toolbar',html,'id="favorites-only"'],
+ ['local favorites key',js,"favoriteKey='catalog-favorites-v1'"],
+ ['local favorites safe loading',js,'function loadFavorites()'],
+ ['favorite persistence',js,'function persistFavorites()'],
+ ['favorites-only filter',js,'!showFavorites||favorites.has(p.sku)'],
+ ['favorite button',js,"favorite.className='favorite-toggle'"],
+ ['favorite selection state',js,"favorite.setAttribute('aria-pressed'"],
+ ['favorites touch styles',css,'.favorite-toggle[aria-pressed="true"]'],
 ]){assert(source.includes(token),label);console.log('PASS',label)}
