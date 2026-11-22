@@ -302,3 +302,9 @@ if(!admin.includes('id="catalogIssueExport"')||!admin.includes("api('/admin/cata
 if(!admin.includes('initialImageCount')||!admin.includes('備份期間資料可能變動'))throw Error('Long-running backup must detect inventory changes');
 if(!admin.includes('id="backupBatchVerifyFile"')||!admin.includes("hash!==photo.sha256"))throw Error('iPad downloaded backup batch verification missing');
 console.log('PASS catalog issues, backup consistency and offline batch verification');
+
+if(!worker.includes("if(path==='/api/admin/backup/preflight'&&method==='GET')")||!worker.includes('photoBatchPages:Math.ceil(objects/10)'))throw Error('Backup preflight summary missing');
+if(!worker.includes("if(path==='/api/admin/photos/orphans'&&method==='GET')")||!worker.includes('NOT EXISTS(SELECT 1 FROM published_media'))throw Error('Safe orphan photo scan missing');
+if(!admin.includes('id="backupPreflight"')||!admin.includes('id="orphanPhotoReport"'))throw Error('iPad backup and orphan controls missing');
+if(!worker.includes("reason:'照片欄位缺少檔案路徑'"))throw Error('Missing photo paths must be reported');
+console.log('PASS backup preflight, read-only orphan scan and missing photo path reports');
