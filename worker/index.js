@@ -203,7 +203,7 @@ export default {async fetch(request,env){if(!env.IMAGES&&env.DB)env={...env,IMAG
   if(path==='/api/admin/backup/image-index'&&method==='GET'){
    if(!await requireAdmin(request,env))return fail('Unauthorized',401);
    const cursor=url.searchParams.get('cursor')||'';
-   if(cursor.length>512)return fail('游標過長',422);
+   if(cursor.length>512||/[\\x00-\\x1f\\x7f]/.test(cursor))return fail('游標過長或內容不正確',422);
    const pageSize=100;
    const {results=[]}=await env.DB.prepare('SELECT object_key,content_type,size_bytes FROM trial_image_objects WHERE object_key>? ORDER BY object_key LIMIT 101').bind(cursor).all();
    const batch=results.slice(0,pageSize);
@@ -218,11 +218,21 @@ export default {async fetch(request,env){if(!env.IMAGES&&env.DB)env={...env,IMAG
   if(path==='/api/admin/backup/images'&&method==='GET'){
    if(!await requireAdmin(request,env))return fail('Unauthorized',401);
    const cursor=url.searchParams.get('cursor')||'';
-   if(cursor.length>512||cursor.includes('\\0'))return fail('游標長度或內容不正確',422);
+   if(cursor.length>512||/[\\x00-\\x1f\\x7f]/.test(cursor))return fail('游標長度或內容不正確',422);
    const {results=[]}=await env.DB.prepare('SELECT object_key,content_type,size_bytes,data FROM trial_image_objects WHERE object_key>? ORDER BY object_key LIMIT 11').bind(cursor).all();
    const batch=results.slice(0,10),images=[];
    for(const row of batch){const bytes=new Uint8Array(row.data);if(bytes.byteLength!==Number(row.size_bytes))return fail('備份照片資料不完整：'+row.object_key,409);const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))).map(n=>n.toString(16).padStart(2,'0')).join('');images.push({key:row.object_key,type:row.content_type,size:bytes.byteLength,sha256:hash,data:bytesToBase64(bytes)})}
    return json({format:'catalog-v12-d1-photo-batch',version:1,images,exportedCount:images.length,hasMore:results.length>10,nextCursor:batch.at(-1)?.object_key||cursor,includesR2:false,restorable:false,note:'D1 舊照片分批匯出資料；不包含 R2 照片，需保存全部批次與商品資料才能進行未來還原'});
+  }
+  if(path==='/api/admin/catalog/issues'&&method==='GET'){
+   if(!await requireAdmin(request,env))return fail('Unauthorized',401);
+   const raw=url.searchParams.get('after')||'0';
+   if(!/^(0|[1-9][0-9]{0,12})$/.test(raw)||!Number.isSafeInteger(Number(raw)))return fail('檢查進度格式不正確',422);
+   const after=Number(raw);
+   const {results=[]}=await env.DB.prepare("SELECT p.id,p.sku,p.name,p.status,COUNT(i.id) AS photos,SUM(CASE WHEN i.id IS NOT NULL AND (i.original_key IS NULL OR i.original_key='' OR i.display_key IS NULL OR i.display_key='' OR i.thumb_key IS NULL OR i.thumb_key='') THEN 1 ELSE 0 END) AS incomplete FROM products p LEFT JOIN product_images i ON i.product_id=p.id WHERE p.id>? GROUP BY p.id ORDER BY p.id LIMIT 101").bind(after).all();
+   const batch=results.slice(0,100),issues=[];
+   for(const row of batch){if(row.status==='active'&&Number(row.photos)===0)issues.push({id:row.id,sku:row.sku,name:row.name,problem:'上架商品沒有照片'});if(Number(row.incomplete)>0)issues.push({id:row.id,sku:row.sku,name:row.name,problem:'照片缺少原圖、展示圖或縮圖',count:Number(row.incomplete)})}
+   return json({scanned:batch.length,issues,hasMore:results.length>100,nextAfter:batch.at(-1)?.id||after,note:'只讀取資料，不更改商品。此檢查不能取代照片實際檔案存在性檢查。'});
   }
   if(path==='/api/admin/catalog/audit'&&method==='GET'){
    if(!await requireAdmin(request,env))return fail('Unauthorized',401);
