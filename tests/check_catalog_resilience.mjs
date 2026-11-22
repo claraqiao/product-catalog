@@ -19,4 +19,9 @@ for(const [label,source,token] of [
  ['product specification detail',js,"['規格',p.specification]"],
  ['safe detail text',js,'span.textContent=String(value)'],
  ['detail region',html,'id="view-details"'],
+ ['photo thumbnail strip',html,'id="viewer-thumbnails"'],
+ ['thumbnail navigation',js,'function renderViewerThumbnails()'],
+ ['thumbnail selection',js,"b.setAttribute('aria-pressed',String(i===index))"],
+ ['thumbnail keyboard focus',js,"...document.querySelectorAll('#viewer-thumbnails button')"],
+ ['thumbnail mobile style',css,'.viewer-thumb[aria-pressed="true"]'],
 ]){assert(source.includes(token),label);console.log('PASS',label)}
