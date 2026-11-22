@@ -251,6 +251,14 @@ export default {async fetch(request,env){if(!env.IMAGES&&env.DB)env={...env,IMAG
    ]){const row=await env.DB.prepare(sql).first();counts[label]=Number(row?.n||0)}
    return json({checkedAt:new Date().toISOString(),counts,readyForPublish:counts.productsWithoutPhotos===0&&counts.photosWithoutDisplay===0&&counts.photosWithoutThumb===0&&counts.duplicateSkus===0,note:'僅檢查資料表與照片欄位；照片檔案實際存在與否，請另外執行照片完整性檢查。'});
   }
+  if(path==='/api/admin/photos/orphans'&&method==='GET'){
+   if(!await requireAdmin(request,env))return fail('Unauthorized',401);
+   const cursor=url.searchParams.get('cursor')||'';
+   if(cursor.length>512||/[\\x00-\\x1f\\x7f]/.test(cursor))return fail('游標不正確',422);
+   const {results=[]}=await env.DB.prepare("SELECT t.object_key,t.size_bytes FROM trial_image_objects t WHERE t.object_key>? AND NOT EXISTS(SELECT 1 FROM product_images p WHERE p.original_key=t.object_key OR p.display_key=t.object_key OR p.thumb_key=t.object_key) AND NOT EXISTS(SELECT 1 FROM published_media m WHERE m.image_key=t.object_key) ORDER BY t.object_key LIMIT 101").bind(cursor).all();
+   const batch=results.slice(0,100);
+   return json({files:batch.map(x=>({key:x.object_key,size:Number(x.size_bytes)})),hasMore:results.length>100,nextCursor:batch.at(-1)?.object_key||cursor,readOnly:true,note:'疑似未被商品或已發布頁面使用的 D1 檔案；不會自動刪除。其他用途仍可能需要這些檔案，請人工確認。'});
+  }
   if(path==='/api/admin/backup/preflight'&&method==='GET'){
    if(!await requireAdmin(request,env))return fail('Unauthorized',401);
    const names=['categories','products','product_images','publish_revisions','published_catalog','published_media','audit_log','app_settings','photo_upload_requests'],counts={};
