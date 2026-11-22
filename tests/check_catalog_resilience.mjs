@@ -53,4 +53,6 @@ for(const [label,source,token] of [
  ['catalog share native',js,'await navigator.share({title:document.title,url})'],
  ['catalog share clipboard',js,'await navigator.clipboard.writeText(url)'],
  ['catalog share status',html,'id="catalog-share-status"'],
+ ['broken thumbnail fallback',js,'照片暫時無法顯示'],
+ ['broken thumbnail stops opening',js,"button.classList.add('no-photo');button.textContent='照片暫時無法顯示';button.disabled=true"],
 ]){assert(source.includes(token),label);console.log('PASS',label)}
