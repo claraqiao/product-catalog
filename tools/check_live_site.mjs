@@ -40,4 +40,16 @@ for(const route of ['/api/admin/settings','/api/admin/storage','/api/admin/backu
  const payload=await response.json();
  if(!payload||typeof payload.error!=='string')throw Error(route+': missing access-denied error');
 }
+const productsResponse=await fetch(root+'/catalog/products.json',{signal:AbortSignal.timeout(15000)});
+const products=await productsResponse.json();
+for(const p of products.slice(0,5)){
+ if(typeof p.sku!=='string'||typeof p.name!=='string'||!Array.isArray(p.images))throw Error('Published product shape invalid');
+ for(const im of p.images.slice(0,2)){
+  const src=im.thumb||im.src||im.display;
+  if(typeof src!=='string'||!src.startsWith('/'))throw Error('Published photo path is invalid');
+  const response=await fetch(root+src,{redirect:'manual',signal:AbortSignal.timeout(15000)});
+  if(!response.ok||!(response.headers.get('content-type')||'').startsWith('image/'))throw Error('Published photo unavailable: '+src+' HTTP '+response.status);
+  console.log('PASS published photo',src);
+ }
+}
 console.log('Read-only live checks passed. Photo uploads, login, publication, D1 storage and iPad usability still require separate testing.');
