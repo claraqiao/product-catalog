@@ -340,3 +340,8 @@ if(!worker.includes("format:'catalog-v12-backup-manifest',version:1"))throw Erro
 if(!admin.includes("id=\"backupManifestDownload\"")||!admin.includes("manifestMatch=!!manifest&&keys.size===manifest.legacyImages"))throw Error('Offline backup must reconcile selected photo batches against the manifest');
 if(!admin.includes("complete:!!manifest&&manifestMatch&&chainValid"))throw Error('Offline backup must fail closed without manifest and cursor chain');
 console.log('PASS manifest-based offline backup integrity reconciliation');
+
+if(!worker.includes("照片備份游標不是有效的檔案名稱"))throw Error('Photo backup cursor must validate path');
+if(!worker.includes("照片備份遇到不支援的檔案格式"))throw Error('Photo backup must reject unsupported content types');
+if(!admin.includes("照片內容與宣告格式不一致")||!admin.includes("公開展示圖必須為 WebP"))throw Error('Offline audit must check image signatures and public media formats');
+console.log('PASS backup cursor, photo media and offline signature validation');
