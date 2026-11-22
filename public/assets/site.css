@@ -18,3 +18,10 @@
 @media(max-width:767px){.paging-controls{margin:8px 0 12px}.page-size-label select{font-size:16px}}
 
 .product-category{font-size:13px;color:#68747c;margin-top:6px;overflow-wrap:anywhere}
+
+/* Accessible catalog sorting, designed for touch screens */
+.paging-controls{gap:12px;flex-wrap:wrap}
+.sort-label{display:inline-flex;align-items:center;gap:8px;color:#4b5563;font-size:14px}
+.sort-label select{font:inherit;background:#fff;color:#27333d;border:1px solid #aab2b9;border-radius:8px;padding:8px 12px;min-height:44px}
+.sort-label select:focus-visible{outline:3px solid var(--brand);outline-offset:3px}
+@media(max-width:767px){.paging-controls{justify-content:space-between;gap:8px}.sort-label select{font-size:16px}}
