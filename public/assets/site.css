@@ -66,3 +66,7 @@
 #share-favorites,#retry-photo{font:inherit;min-height:44px;padding:8px 12px;border:1px solid #aab2b9;border-radius:8px;background:#fff;color:#27333d;cursor:pointer}
 #share-favorites:focus-visible,#retry-photo:focus-visible{outline:3px solid var(--brand);outline-offset:3px}
 #retry-photo{margin:8px 0}
+
+#viewer-favorite{font:inherit;min-height:44px;padding:8px 12px;border:1px solid #c5cbd0;border-radius:8px;background:#fff;color:#27333d;cursor:pointer}
+#viewer-favorite[aria-pressed="true"]{font-weight:700;color:#9b2454;border-color:#9b2454}
+#viewer-favorite:focus-visible{outline:3px solid #fff;outline-offset:3px}
