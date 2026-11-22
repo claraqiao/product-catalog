@@ -321,3 +321,8 @@ console.log('PASS offline complete backup set SHA256 and metadata referential ve
 
 if(!admin.includes("link.download='商品問題清單_'")||!admin.includes("'.csv'")||!admin.includes("type:'text/csv;charset=utf-8'"))throw Error('Catalog issues must download as readable CSV');
 console.log('PASS iPad-friendly CSV catalog issue export');
+
+if(!worker.includes("startCursor:cursor,images,exportedCount"))throw Error('Photo backup must carry start cursor');
+if(!admin.includes("segments.push({start:obj.startCursor")||!admin.includes("chainValid=count===segments.length"))throw Error('Offline photo backup must verify every cursor in sequence');
+if(!admin.includes("sequencePlausible:batches>0&&unfinishedBatches===batches-1&&emptyBatches===0&&chainValid"))throw Error('Backup sequence check must fail closed');
+console.log('PASS offline backup cursor chain continuity and fail-closed verification');
