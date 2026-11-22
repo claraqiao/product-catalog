@@ -14,6 +14,7 @@ const must=[
  ['loading indication', "large.setAttribute('aria-busy','true')"],
  ['failure message', 'status.hidden=false'],
  ['only neighbor preloads', '[requestedIndex-1,requestedIndex+1]'],
+ ['vertical scroll is not treated as swipe', 'Math.abs(dx)>Math.abs(dy)*1.3'],
  ['page size matches spec', 'for(const n of [24,48])'],
  ['no duplicate prefetch objects', 'loadPhoto(imageSource(p.images[i])).catch(()=>{})'],
 ];
