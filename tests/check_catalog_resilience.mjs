@@ -24,4 +24,8 @@ for(const [label,source,token] of [
  ['thumbnail selection',js,"b.setAttribute('aria-pressed',String(i===index))"],
  ['thumbnail keyboard focus',js,"...document.querySelectorAll('#viewer-thumbnails button')"],
  ['thumbnail mobile style',css,'.viewer-thumb[aria-pressed="true"]'],
+ ['gallery keyboard focus preservation',js,"setImage();b.focus()"],
+ ['photo Home keyboard shortcut',js,"e.key==='Home'"],
+ ['photo End keyboard shortcut',js,"e.key==='End'"],
+ ['search results announced',html,'aria-live="polite"'],
 ]){assert(source.includes(token),label);console.log('PASS',label)}
