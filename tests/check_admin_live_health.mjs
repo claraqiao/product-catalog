@@ -3,6 +3,8 @@ import {readFileSync} from 'node:fs';
 const source=readFileSync(new URL('../admin/assets/admin.js',import.meta.url),'utf8');
 assert(source.includes('id="liveHealthStatus"'),'dashboard needs visible live check status');
 assert(source.includes('id="refreshLiveHealth"'),'dashboard needs manual retry');
+assert(source.includes('id="copyCatalogLink"'),'iPad admin needs customer link sharing');
+assert(source.includes('開啟客人看到的網站'),'iPad admin needs a direct customer preview');
 assert(source.includes("fetch('/api/health'"),'must test deployed Worker and D1');
 assert(source.includes("fetch('/catalog/products.json'"),'must test public products');
 assert(source.includes("fetch('/catalog/settings.json'"),'must test public settings');
