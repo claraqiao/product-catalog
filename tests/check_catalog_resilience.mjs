@@ -49,4 +49,8 @@ for(const [label,source,token] of [
  ['favorites touch styles',css,'.favorite-toggle[aria-pressed="true"]'],
  ['category counts',js,'products.filter(p=>p.category===value).length'],
  ['favorites empty state',js,'沒有符合條件的收藏商品'],
+ ['catalog share control',html,'id="share-catalog"'],
+ ['catalog share native',js,'await navigator.share({title:document.title,url})'],
+ ['catalog share clipboard',js,'await navigator.clipboard.writeText(url)'],
+ ['catalog share status',html,'id="catalog-share-status"'],
 ]){assert(source.includes(token),label);console.log('PASS',label)}
