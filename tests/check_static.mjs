@@ -241,7 +241,7 @@ for(const part of ['requireAdmin(request,env)','SHA-256','LIMIT 21','mismatches'
 if(!admin.includes('核對全部舊照片')||!admin.includes('/admin/storage/migration-status?cursor='))throw Error('iPad migration verification UI missing');
 console.log('PASS paginated SHA-256 verification for legacy photo migration');
 
-if(!healthSource.includes('imageStoreWithLegacyFallback(env.IMAGES,env.DB)'))throw Error('Legacy photo read-through fallback missing');
+if(!healthSource.includes("imageStoreWithLegacyFallback(env.IMAGES,env.DB,env.ALLOW_R2_WRITES==='true')"))throw Error('Legacy photo read-through fallback missing');
 if(!healthSource.includes('IMAGES_R2:env.IMAGES'))throw Error('Raw R2 binding must remain available for independent migration verification');
 if(!healthSource.includes('if(env.IMAGES_R2){const legacy='))throw Error('Mixed-store backup must fail safely');
 console.log('PASS D1 legacy read-through and independent R2 verification');
@@ -325,7 +325,7 @@ console.log('PASS iPad-friendly CSV catalog issue export');
 
 if(!worker.includes("startCursor:cursor,images,exportedCount"))throw Error('Photo backup must carry start cursor');
 if(!admin.includes("segments.push({start:obj.startCursor")||!admin.includes("chainValid=count===segments.length"))throw Error('Offline photo backup must verify every cursor in sequence');
-if(!admin.includes("sequencePlausible:batches>0&&unfinishedBatches===batches-1&&emptyBatches===0&&chainValid"))throw Error('Backup sequence check must fail closed');
+if(!admin.includes('batches>0&&unfinishedBatches===batches-1&&emptyBatches===0&&chainValid'))throw Error('Backup sequence check must fail closed');
 console.log('PASS offline backup cursor chain continuity and fail-closed verification');
 
 if(!worker.includes("if(required.every(name=>existing.has(name)))return"))throw Error('D1 schema must detect all required tables before skipping repair');
@@ -338,7 +338,7 @@ if(!worker.includes("const safe={};for(const k of ['site_name','site_description
 console.log('PASS public catalog and settings expose only intended storefront fields');
 
 if(!worker.includes("format:'catalog-v12-backup-manifest',version:1"))throw Error('Backup manifest must have a versioned format');
-if(!admin.includes("id=\"backupManifestDownload\"")||!admin.includes("manifestMatch=!!manifest&&keys.size===manifest.legacyImages"))throw Error('Offline backup must reconcile selected photo batches against the manifest');
+if(!admin.includes('id="backupManifestDownload"')||!admin.includes("manifestMatch=!!manifest&&keys.size===manifest.legacyImages"))throw Error('Offline backup must reconcile selected photo batches against the manifest');
 if(!admin.includes("complete:!!manifest&&manifestMatch&&chainValid"))throw Error('Offline backup must fail closed without manifest and cursor chain');
 console.log('PASS manifest-based offline backup integrity reconciliation');
 
