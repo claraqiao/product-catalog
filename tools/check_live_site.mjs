@@ -20,6 +20,18 @@ async function check(route,expected,kind){
 }
 await check('/',[200],'html');
 await check('/admin/',[200],'html');
+for(const route of ['/assets/site.js','/assets/site.css','/admin/assets/admin.js','/admin/assets/admin.css']){
+ const response=await check(route,[200]);
+ const body=await response.text();
+ if(body.length<100)throw Error(route+': static asset appears empty');
+ if(/<html[\\s>]/i.test(body.slice(0,200)))throw Error(route+': received HTML instead of expected asset');
+}
+for(const route of ['/catalog/products.json','/catalog/settings.json']){
+ const response=await check(route,[200],'json');
+ const payload=await response.json();
+ if(route.endsWith('products.json')&&!Array.isArray(payload))throw Error('Public products must be a JSON array');
+ if(route.endsWith('settings.json')&&(!payload||Array.isArray(payload)||typeof payload!=='object'))throw Error('Public settings must be a JSON object');
+}
 const health=await check('/api/health',[200],'json');
 const data=await health.json();
 if(data.ok!==true||data.service!=='catalog-api')throw Error('Health response does not identify the catalog API');
