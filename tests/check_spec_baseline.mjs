@@ -18,7 +18,7 @@ const checks=[
  ['產品連結分享',()=>assert(html.includes('id="share-product"')&&js.includes('shareProduct()'))],
  ['延遲載入縮圖',()=>assert(js.includes("img.loading='lazy'"))],
  ['相鄰圖片預載',()=>assert(js.includes('new Image()'))],
- ['大量商品分批顯示',()=>assert(js.includes('visibleCount=80')&&js.includes('visibleCount+=80'))],
+ ['大量商品分批顯示',()=>assert(js.includes('visibleCount=48')&&js.includes('visibleCount+=48'))],
  ['管理端包含備份與發布',()=>assert(admin.includes('備份與還原')&&admin.includes('預覽與發布'))],
  ['公開網站不包含管理員登入表單',()=>assert(!html.includes('id="username"'))],
  ['公開商品資料由獨立索引取得',()=>assert(js.includes('/catalog/products.json'))],
