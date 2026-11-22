@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const js=readFileSync(new URL('../public/assets/site.js',import.meta.url),'utf8');
 const css=readFileSync(new URL('../public/assets/site.css',import.meta.url),'utf8');
+const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
 for(const [label,source,token] of [
  ['24/48 choices',js,'for(const n of [24,48])'],
  ['page size change',js,"pageSize.addEventListener('change'"],
@@ -13,4 +14,9 @@ for(const [label,source,token] of [
  ['product category on cards',js,"categoryText.textContent=p.category"],
  ['product category styling',css,'.product-category'],
  ['photo busy indicator',css,'img[aria-busy="true"]'],
+ ['sort selector',js,"sort.addEventListener('change',filter)"],
+ ['series sort',js,"sort.value==='series'"],
+ ['product specification detail',js,"['規格',p.specification]"],
+ ['safe detail text',js,'span.textContent=String(value)'],
+ ['detail region',html,'id="view-details"'],
 ]){assert(source.includes(token),label);console.log('PASS',label)}
