@@ -330,7 +330,7 @@ console.log('PASS offline backup cursor chain continuity and fail-closed verific
 
 if(!worker.includes("if(required.every(name=>existing.has(name)))return"))throw Error('D1 schema must detect all required tables before skipping repair');
 if(!worker.includes("await ensureTrialSchema(env.DB);const required="))throw Error('Health check must initialize D1 schema');
-if(!worker.includes("async delete(key){if(allowWrites)await r2.delete(key);await legacy.delete(key)}"))throw Error('R2 deletion must be gated while D1 cleanup remains available');
+if(!worker.includes("async delete(key){if(!allowWrites)throw Error(")||!worker.includes("await r2.delete(key);await legacy.delete(key)"))throw Error('R2 deletion must fail closed when writes are disabled and clean up both stores only when enabled');
 console.log('PASS D1 partial schema repair and R2 opt-in deletion safety');
 
 if(!worker.includes("products=products.map(p=>({sku:p.sku,name:p.name"))throw Error('Public catalog must explicitly allowlist product fields');
