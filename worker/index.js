@@ -271,7 +271,7 @@ export default {async fetch(request,env){if(!env.IMAGES&&env.DB)env={...env,IMAG
    if(total>18*1024*1024)warnings.push('照片超過 18 MiB，單一完整備份下載功能無法使用');
    if(total>200*1024*1024)warnings.push('D1 照片超過應用程式設定的 200 MiB 安全上限');
    if(Number(storage?.max_bytes||0)>524288)warnings.push('有照片超過 512 KiB 的單檔上限');
-   if(Number(references?.n||0)>objects&& !r2)warnings.push('商品照片參照數大於 D1 檔案數；請執行照片完整性檢查');
+   // A reference count can exceed object count when multiple records reuse one photo key; rely on the exact missing-reference query below.
    const missingRefs=await env.DB.prepare("SELECT COUNT(*) AS n FROM (SELECT original_key AS k FROM product_images UNION ALL SELECT display_key FROM product_images UNION ALL SELECT thumb_key FROM product_images UNION ALL SELECT image_key FROM published_media) refs WHERE refs.k IS NULL OR refs.k='' OR (NOT EXISTS (SELECT 1 FROM trial_image_objects t WHERE t.object_key=refs.k))").first();
    const missingD1References=Number(missingRefs?.n||0);
    if(!r2&&missingD1References)warnings.push('有 '+missingD1References+' 筆照片參照找不到 D1 檔案；請先檢查照片完整性');
