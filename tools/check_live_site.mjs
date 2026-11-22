@@ -5,7 +5,6 @@ const url=new URL(base);
 if(url.protocol!=='https:'||url.username||url.password||url.search||url.hash)throw Error('Use a plain HTTPS site URL without credentials or query parameters');
 const root=url.origin;
 if(url.pathname!=='/'&&url.pathname!=='')throw Error('Use the site origin only, not an admin or product path');
-const failures=[];
 
 async function check(route,expected,kind){
  const response=await fetch(root+route,{redirect:'manual',signal:AbortSignal.timeout(15000),headers:{accept:'application/json'}});
