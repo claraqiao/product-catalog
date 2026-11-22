@@ -6,7 +6,7 @@
  const favorites=loadFavorites();let showFavorites=false;
  function persistFavorites(){try{localStorage.setItem(favoriteKey,JSON.stringify([...favorites]))}catch{}}
  function updateFavorites(){favoritesCount.textContent=String(favorites.size);favoritesOnly.setAttribute('aria-pressed',String(showFavorites));favoritesOnly.textContent=showFavorites?'♥ 顯示全部商品':'♡ 我的收藏';const n=document.createElement('span');n.id='favorites-count';n.textContent=String(favorites.size);favoritesOnly.append(n)}
- function toggleFavorite(sku){if(favorites.has(sku))favorites.delete(sku);else favorites.add(sku);persistFavorites();updateFavorites();render()}
+ function toggleFavorite(sku){if(favorites.has(sku))favorites.delete(sku);else favorites.add(sku);persistFavorites();updateFavorites();filter()}
  favoritesOnly.addEventListener('click',()=>{showFavorites=!showFavorites;updateFavorites();filter()});
  updateFavorites();
  const imageCache=new Map();
