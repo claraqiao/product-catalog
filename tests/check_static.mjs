@@ -277,3 +277,8 @@ console.log('PASS free-first R2 write guard and catalog photo integrity audit');
 if(!healthSource.includes("sha256:hash,data:bytesToBase64(bytes)")||!healthSource.includes("size:bytes.byteLength"))throw Error('Photo backup server must provide per-file checksum and length');
 if(!admin.includes("hash!==photo.sha256")||!admin.includes("bytes.length!==photo.size"))throw Error('iPad must verify backup contents before saving');
 console.log('PASS photo backup SHA-256 end-to-end integrity checks');
+
+if(!healthSource.includes('ORDER BY object_key LIMIT 11')||!healthSource.includes('results.slice(0,10)'))throw Error('D1 photo backup must paginate 10 images');
+if(!admin.includes("sessionStorage.setItem('catalogD1BackupProgress'")||!admin.includes("sessionStorage.removeItem('catalogD1BackupProgress'"))throw Error('iPad photo backup resume/restart controls missing');
+if(!admin.includes('id="backupPhotoReset"'))throw Error('Photo backup must offer explicit restart');
+console.log('PASS resumable 10-photo D1 backup pages and restart control');
