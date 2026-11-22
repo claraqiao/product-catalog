@@ -296,3 +296,9 @@ if(!worker.includes("if(path==='/api/admin/catalog/audit'&&method==='GET')")||!w
 if(!admin.includes('id="catalogAudit"')||!admin.includes("api('/admin/catalog/audit')"))throw Error('iPad catalog audit action missing');
 if(!admin.includes('manifest.legacyImages!==exportedFiles')||!admin.includes('completionWarning'))throw Error('Photo backup final file count reconciliation missing');
 console.log('PASS catalog structure audit and backup batch count reconciliation');
+
+if(!worker.includes("if(path==='/api/admin/catalog/issues'&&method==='GET')")||!worker.includes('GROUP BY p.id ORDER BY p.id LIMIT 101'))throw Error('Paginated catalog issue report route missing');
+if(!admin.includes('id="catalogIssueExport"')||!admin.includes("api('/admin/catalog/issues?after='"))throw Error('iPad catalog issue report UI missing');
+if(!admin.includes('initialImageCount')||!admin.includes('備份期間資料可能變動'))throw Error('Long-running backup must detect inventory changes');
+if(!admin.includes('id="backupBatchVerifyFile"')||!admin.includes("hash!==photo.sha256"))throw Error('iPad downloaded backup batch verification missing');
+console.log('PASS catalog issues, backup consistency and offline batch verification');
