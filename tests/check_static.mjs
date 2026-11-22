@@ -288,3 +288,6 @@ if(!worker.includes("Number(inserted.meta?.changes||0)!==1"))throw Error('Failed
 if(!worker.includes('catalogTargetPhotos:800')||!worker.includes('estimatedTotalBytesFor800:'))throw Error('800-photo capacity estimate missing');
 if(!admin.includes('800 張照片容量試算'))throw Error('iPad must explain 800-photo capacity assumptions');
 console.log('PASS atomic free photo quota and 800-photo planning');
+
+if(!admin.includes("format:'catalog-photo-integrity-report'")||!admin.includes("link.download='照片完整性檢查報告_'"))throw Error('Photo integrity audit must export a complete report');
+console.log('PASS downloadable iPad photo integrity report');
