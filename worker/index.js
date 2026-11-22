@@ -74,9 +74,8 @@ function trialImages(db) {
    const bytes=await new Response(stream).arrayBuffer();
    if(!bytes.byteLength||bytes.byteLength>524288) throw Error('免費測試版單張檔案上限 512 KiB，請先壓縮照片');
    // Reserve headroom in the free D1 database for product metadata and migrations.
-   const usage=await db.prepare('SELECT COALESCE(SUM(size_bytes),0) AS used FROM trial_image_objects').first();
-   if(Number(usage?.used||0)+bytes.byteLength>200*1024*1024)throw Error('免費測試版照片容量已達 200 MiB 安全上限，請先整理照片；系統不會自動啟用付費儲存');
-   await db.prepare('INSERT INTO trial_image_objects(object_key,content_type,size_bytes,data) VALUES(?,?,?,?)').bind(key,options.httpMetadata?.contentType||'application/octet-stream',bytes.byteLength,bytes).run();
+   const inserted=await db.prepare('INSERT INTO trial_image_objects(object_key,content_type,size_bytes,data) SELECT ?,?,?,? WHERE (SELECT COALESCE(SUM(size_bytes),0) FROM trial_image_objects)+?<=?').bind(key,options.httpMetadata?.contentType||'application/octet-stream',bytes.byteLength,bytes,bytes.byteLength,200*1024*1024).run();
+   if(Number(inserted.meta?.changes||0)!==1)throw Error('免費照片容量已達 200 MiB 安全上限；沒有儲存這張照片，也不會自動啟用付費儲存');
   },
   async get(key) {
    const row=await lookup(key); if(!row)return null;
