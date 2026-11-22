@@ -24,6 +24,7 @@ jobs:
       - run: node tests/check_spec_baseline.mjs
       - run: node tests/check_photo_transition.mjs
       - run: node tests/check_catalog_resilience.mjs
+      - run: node tests/check_storage_safety.mjs
       - run: node tests/check_csv_security.mjs
       - run: node tests/check_backup.mjs
       - run: node tests/check_settings.mjs
