@@ -267,3 +267,9 @@ if(!admin.includes('id="backupPhotoBatch"')||!admin.includes("'/api/admin/backup
 if(!admin.includes('result.nextCursor===nextCursor')||!admin.includes('result.hasMore'))throw Error('iPad photo backup must detect stalled cursors');
 if(!healthSource.includes('exportedCount:images.length'))throw Error('Photo backup batch count missing');
 console.log('PASS iPad photo batch downloads and progress guards');
+
+if(!healthSource.includes("env.ALLOW_R2_WRITES==='true'")||!healthSource.includes("if(!allowWrites)throw Error("))throw Error('R2 photo uploads must be explicitly enabled');
+if(!healthSource.includes("r2WritesEnabled:env.ALLOW_R2_WRITES==='true'"))throw Error('R2 write status must be visible to admin');
+if(!admin.includes('R2 新照片上傳已鎖定'))throw Error('iPad must disclose R2 write lock');
+if(!healthSource.includes("if(path==='/api/admin/photos/audit'&&method==='GET')")||!admin.includes('photoIntegrityAudit'))throw Error('iPad photo integrity audit missing');
+console.log('PASS free-first R2 write guard and catalog photo integrity audit');
