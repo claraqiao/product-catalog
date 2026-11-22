@@ -61,3 +61,8 @@
 #share-catalog{font:inherit;min-height:44px;padding:8px 12px;border:1px solid #aab2b9;border-radius:8px;background:#fff;color:#27333d;cursor:pointer}
 #share-catalog:focus-visible{outline:3px solid var(--brand);outline-offset:3px}
 #catalog-share-status{font-size:13px;color:#27333d}
+
+/* Easy sharing of selected products and recovery from slow mobile networks */
+#share-favorites,#retry-photo{font:inherit;min-height:44px;padding:8px 12px;border:1px solid #aab2b9;border-radius:8px;background:#fff;color:#27333d;cursor:pointer}
+#share-favorites:focus-visible,#retry-photo:focus-visible{outline:3px solid var(--brand);outline-offset:3px}
+#retry-photo{margin:8px 0}
