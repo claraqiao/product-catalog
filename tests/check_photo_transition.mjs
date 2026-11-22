@@ -6,7 +6,7 @@ const must=[
  ['request version guard', 'request!==imageRequest'],
  ['ignore stale product', 'active!==p'],
  ['ignore stale photo index', 'index!==requestedIndex'],
- ['keep previous photo while loading', 'Keep the previous decoded image visible'],
+ ['show matching thumbnail while loading', "large.src=thumb;large.alt=im.alt||p.name"],
  ['decode before display', 'await im.decode()'],
  ['image cache', 'const imageCache=new Map()'],
  ['bounded cache', 'imageCache.size>12'],
