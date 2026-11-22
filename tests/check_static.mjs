@@ -331,3 +331,7 @@ if(!worker.includes("if(required.every(name=>existing.has(name)))return"))throw 
 if(!worker.includes("await ensureTrialSchema(env.DB);const required="))throw Error('Health check must initialize D1 schema');
 if(!worker.includes("async delete(key){if(allowWrites)await r2.delete(key);await legacy.delete(key)}"))throw Error('R2 deletion must be gated while D1 cleanup remains available');
 console.log('PASS D1 partial schema repair and R2 opt-in deletion safety');
+
+if(!worker.includes("products=products.map(p=>({sku:p.sku,name:p.name"))throw Error('Public catalog must explicitly allowlist product fields');
+if(!worker.includes("const safe={};for(const k of ['site_name','site_description'"))throw Error('Public settings must explicitly allowlist fields');
+console.log('PASS public catalog and settings expose only intended storefront fields');
