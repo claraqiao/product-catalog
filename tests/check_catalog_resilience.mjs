@@ -55,4 +55,11 @@ for(const [label,source,token] of [
  ['catalog share status',html,'id="catalog-share-status"'],
  ['broken thumbnail fallback',js,'照片暫時無法顯示'],
  ['broken thumbnail stops opening',js,"button.classList.add('no-photo');button.textContent='照片暫時無法顯示';button.disabled=true"],
+ ['share favorites control',html,'id="share-favorites"'],
+ ['favorites list sharing',js,"navigator.share({title:'我的商品收藏',text:message})"],
+ ['favorite product deep links',js,"'#product='+encodeURIComponent(p.sku)"],
+ ['favorites LINE clipboard fallback',js,'收藏清單已複製，可貼到 LINE'],
+ ['photo retry control',html,'id="retry-photo"'],
+ ['photo retry clears failed cache',js,'imageCache.delete(imageSource(active.images[index]))'],
+ ['photo retry style',css,'#share-favorites,#retry-photo'],
 ]){assert(source.includes(token),label);console.log('PASS',label)}
