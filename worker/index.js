@@ -120,7 +120,7 @@ function imageStoreWithLegacyFallback(r2,db,allowWrites=false){
  return {
   ...r2,
   put:(...args)=>{if(!allowWrites)throw Error('R2 寫入未啟用；免費優先模式禁止未經同意的 R2 上傳');return r2.put(...args)},
-  async delete(key){await r2.delete(key);await legacy.delete(key)},
+  async delete(key){if(!allowWrites)throw Error('R2 寫入未啟用；禁止未經同意刪除 R2 照片');await r2.delete(key);await legacy.delete(key)},
   list:(...args)=>r2.list(...args),
   async get(key){return await r2.get(key)||await legacy.get(key)},
   async head(key){return await r2.head(key)||await legacy.head(key)}
