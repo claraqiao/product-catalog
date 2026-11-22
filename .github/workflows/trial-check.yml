@@ -20,6 +20,8 @@ jobs:
       - run: node --check tools/check_deploy_readiness.mjs
       - run: node tools/build_assets.mjs
       - run: node tools/check_deploy_readiness.mjs
+      - name: Execute database migrations and verify image storage
+        run: node tests/check_migrations.mjs
       - name: Publish honest release-readiness summary
         if: always()
         run: node tools/release_status.mjs
