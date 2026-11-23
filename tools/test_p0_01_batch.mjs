@@ -27,6 +27,7 @@ for(const count of [50,800,2000]){
  assert.equal(heads,0,'D1 trial must not do per-image head');
  assert.equal(queries,3);
  assert(queries<=50,'D1 Free per-invocation query budget');
+ assert.equal(snap.products[0].images.length,3);
  console.log(JSON.stringify({products:count,images:count*3,keys:keys.size,queries,status:'PASS'}));
  keys.delete('thumb/1/0');
  await assert.rejects(makeSnapshot(env),/不存在/,'missing thumbnail must reject publication');
