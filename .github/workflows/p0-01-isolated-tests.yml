@@ -21,3 +21,6 @@ jobs:
 
       - name: P0-01 SQLite anti-join regression (no Cloudflare credentials)
         run: python3 tools/test_p0_01_sqlite.py
+
+      - name: P1-01 snapshot UTF-8 byte-size regression
+        run: node tools/test_p1_01_snapshot_bytes.mjs
