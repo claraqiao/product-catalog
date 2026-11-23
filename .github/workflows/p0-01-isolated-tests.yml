@@ -1,0 +1,20 @@
+name: P0-01 isolated regression (no deploy)
+on:
+  push:
+    branches:
+      - fix/p0-01-batch-photo-validation
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check
+        run: node --check worker/index.js
+      - name: P0-01 synthetic tests (no Cloudflare credentials)
+        run: node tools/test_p0_01_batch.mjs
