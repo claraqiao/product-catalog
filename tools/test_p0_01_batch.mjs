@@ -36,4 +36,12 @@ for(const count of [50,800,2000]){
  console.log(JSON.stringify({products:count,images:count*3,keys:keys.size,queries,status:'PASS'}));
  keys.delete('thumb/1/0');
  await assert.rejects(makeSnapshot(env),/不存在/,'missing thumbnail must reject publication');
+ keys.add('thumb/1/0');
+ const first=rows.find(r=>r.id===1);
+ const savedThumb=first.thumb_key;first.thumb_key='';
+ await assert.rejects(makeSnapshot(env),/缺少縮圖/,'blank thumbnail must reject publication');
+ first.thumb_key=savedThumb;
+ const savedDisplay=first.display_key;first.display_key='';
+ await assert.rejects(makeSnapshot(env),/不存在/,'blank display reference must reject publication');
+ first.display_key=savedDisplay;
 }
