@@ -21,11 +21,11 @@ for(const count of [50,800,2000]){
  }
  let queries=0,heads=0;
  const env={IMAGES_IS_TRIAL:true,IMAGES:{head:async()=>{heads++;return true}},DB:{prepare(sql){
-  return {bind(...args){return {async all(){queries++;assert.match(sql,/trial_image_objects/);return {results:args.filter(k=>keys.has(k)).map(object_key=>({object_key}))}}}},async all(){queries++;if(sql.includes('FROM products p'))return {results:rows};if(sql.includes('FROM app_settings'))return {results:[]};throw Error('unexpected SQL: '+sql)}}}}};
+  return {async all(){queries++;if(sql.includes('FROM products p')&&!sql.includes('trial_image_objects'))return {results:rows};if(sql.includes('FROM app_settings'))return {results:[]};if(sql.includes('trial_image_objects')){const missing=rows.flatMap(r=>[r.display_key,r.thumb_key]).filter(k=>!keys.has(k));return {results:missing.length?[{object_key:missing[0]}]:[]}}throw Error('unexpected SQL: '+sql)}}}}};
  const snap=await makeSnapshot(env);
  assert.equal(snap.products.length,count);
  assert.equal(heads,0,'D1 trial must not do per-image head');
- assert.equal(queries,2+Math.ceil(keys.size/200));
+ assert.equal(queries,3);
  assert(queries<=50,'D1 Free per-invocation query budget');
  console.log(JSON.stringify({products:count,images:count*3,keys:keys.size,queries,status:'PASS'}));
  keys.delete('thumb/1/0');
