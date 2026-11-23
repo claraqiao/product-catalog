@@ -6,6 +6,11 @@ const source=fs.readFileSync(new URL('../worker/index.js',import.meta.url),'utf8
 const start=source.indexOf('async function makeSnapshot(');
 const end=source.indexOf('// Bounded D1 storage adapter',start);
 assert(start>=0&&end>start,'makeSnapshot source boundary');
+const healthStart=source.indexOf("if(path==='/api/health'&&method==='GET')");
+const healthEnd=source.indexOf("if(path==='/api/login'",healthStart);
+assert(healthStart>=0&&healthEnd>healthStart,'health route boundary');
+const healthRoute=source.slice(healthStart,healthEnd);
+assert(!healthRoute.includes('ensureTrialSchema('),'health and ordinary request must not initialize schema');
 const context=vm.createContext({Map,Set,Date,Error,Object,Promise});
 const makeSnapshot=vm.runInContext(source.slice(start,end)+'\nmakeSnapshot',context);
 for(const count of [50,800,2000]){
