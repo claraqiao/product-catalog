@@ -307,7 +307,7 @@ export default {async fetch(request,env){if(!env.IMAGES&&env.DB)env={...env,IMAG
    let prepared;try{prepared=JSON.parse(pending.payload_json)}catch{return fail('待發布快照已損毀',409)}
    const sameProducts=JSON.stringify(prepared.products)===JSON.stringify(current.products);
    const sameSettings=JSON.stringify(prepared.settings||{})===JSON.stringify(current.settings||{});
-   if(!sameProducts||!sameSettings)return fail('預覽後產品、照片或網站設定已變更，請重新預覽再確認發布',409);
+   if(!sameProducts||!sameSettings)return fail('預覽後產品、照片或網站設定已變更，請重新預覽再確認發布',409);const currentBytes=new TextEncoder().encode(JSON.stringify(current)).byteLength;if(currentBytes>1900000)return fail('發布快照超過 D1 安全容量，已停止發布；需要分頁儲存方案',409);
    const publishedRow=await env.DB.prepare('SELECT created_at FROM published_catalog WHERE id=1').first();
    const preparedRow=await env.DB.prepare("SELECT created_at FROM publish_revisions WHERE revision=?").bind(b.revision).first();
    if(publishedRow?.created_at&&preparedRow?.created_at&&publishedRow.created_at>preparedRow.created_at)return fail('已有較新的公開版本，請重新預覽後發布',409);
