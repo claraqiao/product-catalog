@@ -18,3 +18,6 @@ jobs:
         run: node --check worker/index.js
       - name: P0-01 synthetic tests (no Cloudflare credentials)
         run: node tools/test_p0_01_batch.mjs
+
+      - name: P0-01 SQLite anti-join regression (no Cloudflare credentials)
+        run: python3 tools/test_p0_01_sqlite.py
