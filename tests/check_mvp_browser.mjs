@@ -1,14 +1,13 @@
 // Run after building assets, with Miniflare and Playwright installed.
 import assert from 'node:assert/strict';
-import { randomBytes, pbkdf2Sync } from 'node:crypto';
+import { randomBytes, createHash } from 'node:crypto';
 import { readFile, readdir } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
 const { Miniflare } = require(process.env.CATALOG_MINIFLARE || 'miniflare');
 const { chromium, devices } = require(process.env.CATALOG_PLAYWRIGHT || 'playwright');
-const password = randomBytes(24).toString('hex');
-const salt = randomBytes(16);
+const password = randomBytes(24).toString('base64url');
 const mf = new Miniflare({
   host: '127.0.0.1',
   modules: true,
@@ -17,7 +16,7 @@ const mf = new Miniflare({
   d1Databases: { DB: 'catalog-mvp-browser-isolated' },
   bindings: {
     ADMIN_USERNAME: 'test-owner',
-    ADMIN_PASSWORD_HASH: salt.toString('base64url') + '.' + pbkdf2Sync(password, salt, 310000, 32, 'sha256').toString('base64url'),
+    ADMIN_PASSWORD_HASH: 'v2.' + createHash('sha256').update(password).digest('base64url'),
     SESSION_SECRET: randomBytes(32).toString('hex'),
   },
   serviceBindings: {
@@ -61,6 +60,14 @@ try {
     if (await admin.locator('#menuBtn').isVisible()) await admin.locator('#menuBtn').click();
     await item.click();
   };
+  await admin.evaluate(() => {
+    const toBlob = HTMLCanvasElement.prototype.toBlob;
+    HTMLCanvasElement.prototype.toBlob = function (callback, type, quality) {
+      // Safari can return PNG for a requested WebP encoding.
+      const rejectWebP = type === 'image/webp' && document.querySelector('#photoProduct')?.value === '1';
+      return toBlob.call(this, callback, rejectWebP ? 'image/png' : type, quality);
+    };
+  });
   const fixtures = await admin.evaluate(() => Array.from({ length: 5 }, (_, i) => {
     const canvas = document.createElement('canvas');
     canvas.width = i % 2 ? 320 : 160;
@@ -68,7 +75,8 @@ try {
     const context = canvas.getContext('2d');
     context.fillStyle = ['red', 'green', 'blue', 'orange', 'purple'][i];
     context.fillRect(0, 0, canvas.width, canvas.height);
-    return canvas.toDataURL('image/png').split(',')[1];
+    const type = i === 0 ? 'image/jpeg' : 'image/png';
+    return { type, data: canvas.toDataURL(type).split(',')[1] };
   }));
   const assertPublicCount = async count => {
     const response = await desktop.request.get(origin + '/catalog/products.json');
@@ -86,15 +94,15 @@ try {
     await admin.locator('#fNote').fill('測試私有備註');
     await admin.locator('[data-save]').click();
     await admin.waitForFunction(() => document.querySelector('#photoProduct')?.value);
-    const files = fixtures.slice(0, j === 0 ? 5 : 4).map((data, i) => ({
-      name: 'fixture-' + i + '.png', mimeType: 'image/png', buffer: Buffer.from(data, 'base64'),
+    const files = fixtures.slice(0, j === 0 ? 5 : 4).map(({ data, type }, i) => ({
+      name: 'fixture-' + i + (type === 'image/jpeg' ? '.jpg' : '.png'), mimeType: type, buffer: Buffer.from(data, 'base64'),
     }));
     if (j === 0) {
       // Commit the final upload but replace its response, then retry at the five-photo limit.
       await admin.route('**/api/admin/photos/upload', async route => {
         const body = route.request().postData() || '';
         const response = await route.fetch();
-        if (body.includes('trial-4.webp')) await route.fulfill({ status: 503, json: { error: '測試回應中斷' } });
+        if (body.includes('trial-4.jpg')) await route.fulfill({ status: 503, json: { error: '測試回應中斷' } });
         else await route.fulfill({ response });
       });
     }
@@ -144,7 +152,13 @@ try {
   await admin.locator('#publishPreview').filter({ hasText: '發布成功' }).waitFor();
   const products = await assertPublicCount(3);
   assert.deepEqual(products.map(product => product.images.length), [5, 4, 4]);
-  assert.equal((await desktop.request.get(origin + products[0].images[0].src)).status(), 200);
+  for (const [product, expectedType] of [[products[0], 'image/jpeg'], [products[1], 'image/webp']]) {
+    for (const url of [product.images[0].src, product.images[0].thumb]) {
+      const response = await desktop.request.get(origin + url);
+      assert.equal(response.status(), 200);
+      assert.equal(response.headers()['content-type'], expectedType);
+    }
+  }
 
   for (const [context, columns] of [[desktop, 3], [mobile, 2]]) {
     const guest = context === mobile ? await browser.newContext({ ...devices['iPhone 13'], defaultBrowserType: 'chromium' }) : desktop;
@@ -198,7 +212,7 @@ try {
   await visitTab('photos');
   await admin.locator('#photoProduct').selectOption({ label: 'TEST-2　測試商品 2' });
   await admin.locator('#photoFiles').setInputFiles({
-    name: 'quota.png', mimeType: 'image/png', buffer: Buffer.from(fixtures[0], 'base64'),
+    name: 'quota.jpg', mimeType: 'image/jpeg', buffer: Buffer.from(fixtures[0].data, 'base64'),
   });
   await admin.locator('#photoUpload').click();
   await admin.locator('#photoList').filter({ hasText: '200 MiB' }).waitFor();

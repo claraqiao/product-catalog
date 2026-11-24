@@ -62,7 +62,7 @@ for(const p of products.slice(0,5)){
   const src=im.thumb||im.src||im.display;
   if(typeof src!=='string'||!/^\/media\/[A-Za-z0-9._/-]+$/.test(src)||src.includes('..'))throw Error('Published photo path is invalid');
   const response=await fetch(root+src,{redirect:'manual',signal:AbortSignal.timeout(15000)});
-  if(!response.ok||!(response.headers.get('content-type')||'').startsWith('image/webp'))throw Error('Published photo unavailable or wrong type: '+src+' HTTP '+response.status);
+  if(!response.ok||!/^image\/(webp|jpeg)(?:;|$)/.test(response.headers.get('content-type')||''))throw Error('Published photo unavailable or wrong type: '+src+' HTTP '+response.status);
   console.log('PASS published photo',src);
  }
 }

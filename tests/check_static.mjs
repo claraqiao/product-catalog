@@ -98,8 +98,8 @@ console.log('PASS photo upload failure returns quota-specific error even if clea
 for(const token of ['async function decodePhoto(file)','typeof createImageBitmap','URL.createObjectURL(file)','URL.revokeObjectURL(url)','await decodePhoto(f)','decoded.cleanup()']){if(!admin.includes(token))throw Error('Missing iOS photo decode fallback: '+token)}
 console.log('PASS iPad/iPhone photo decoding fallback and URL cleanup');
 
-if(!admin.includes("b.type!=='image/webp'")||!admin.includes('目前瀏覽器無法輸出 WebP 照片'))throw Error('Missing Safari WebP output validation');
-console.log('PASS Safari photo upload rejects unsupported WebP encoding before sending');
+if(!admin.includes("webp?.type==='image/webp'")||!admin.includes("await encode('image/jpeg')"))throw Error('Missing Safari JPEG fallback');
+console.log('PASS Safari photo upload can fall back to JPEG');
 
 if(!admin.includes(String.raw`f.type===''&&/\.(jpe?g|png|webp)$/i.test(f.name)`))throw Error('Missing iOS blank MIME type filename fallback');
 console.log('PASS iOS photo picker supports supported file extensions when MIME type is missing');

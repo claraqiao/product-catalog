@@ -32,6 +32,7 @@ function sameOrigin(request){const origin=request.headers.get('Origin');if(!orig
 async function body(request){try{return await request.json()}catch{return null}}
 function parseCSV(text){const rows=[];let row=[],field='',quoted=false;for(let i=0;i<text.length;i++){const c=text[i];if(quoted){if(c==='"'&&text[i+1]==='"'){field+='"';i++}else if(c==='"')quoted=false;else field+=c}else if(c==='"'){quoted=true}else if(c===','){row.push(field);field=''}else if(c==='\n'){row.push(field);rows.push(row);row=[];field=''}else if(c!=='\r'){field+=c}}if(quoted)throw Error('CSV 引號未正確結束');if(field.length||row.length){row.push(field);rows.push(row)}return rows.filter(r=>r.some(v=>v.trim()!==''))}
 function csvCell(value){const raw=String(value??'');const s=/^[\s\uFEFF]*[=+@\-\t\r]/u.test(raw)?"'"+raw:raw;return /[",\r\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s}
+const photoContentType=key=>key.endsWith('.jpg')?'image/jpeg':'image/webp';
 async function validImage(file,kind){const b=new Uint8Array(await file.slice(0,12).arrayBuffer());if(kind==='image/jpeg')return b[0]===0xff&&b[1]===0xd8&&b[2]===0xff;if(kind==='image/png')return b[0]===0x89&&b[1]===0x50&&b[2]===0x4e&&b[3]===0x47;if(kind==='image/webp')return b[0]===0x52&&b[1]===0x49&&b[2]===0x46&&b[3]===0x46&&b[8]===0x57&&b[9]===0x45&&b[10]===0x42&&b[11]===0x50;return false}
 async function inspectImport(env,csv){if(typeof csv!=='string'||csv.length>5*1024*1024)throw Error('CSV 檔案不可超過 5 MiB');const rows=parseCSV(csv.replace(/^\uFEFF/,''));if(!rows.length)throw Error('CSV 沒有資料');const headers=rows.shift().map(x=>x.trim());if(new Set(headers).size!==headers.length)throw Error('CSV 欄位名稱不可重複');const required=['sku','name','category'];for(const h of required)if(!headers.includes(h))throw Error('缺少必要欄位：'+h);if(rows.length>2000)throw Error('單次最多匯入 2,000 筆');const existing=await env.DB.prepare('SELECT sku FROM products').all();if((existing.results||[]).length+rows.length>2000)throw Error('產品總數不可超過 2,000 筆，請先整理既有產品');const known=new Set((existing.results||[]).map(x=>x.sku)),seen=new Set(),cats=await env.DB.prepare('SELECT name FROM categories').all(),catNames=new Set((cats.results||[]).map(x=>x.name));const ix=Object.fromEntries(headers.map((h,i)=>[h,i])),issues=[],valid=[];rows.forEach((r,n)=>{const line=n+2,obj={};for(const h of headers)obj[h]=r[ix[h]]??'';const sku=(obj.sku||'').trim(),name=(obj.name||'').trim(),category=(obj.category||'未分類').trim();if(!sku||!name)issues.push(`第 ${line} 列：SKU 與產品名稱必填`);if(known.has(sku))issues.push(`第 ${line} 列：SKU ${sku} 已存在，不可覆寫`);if(seen.has(sku))issues.push(`第 ${line} 列：CSV 內 SKU ${sku} 重複`);if(!catNames.has(category))issues.push(`第 ${line} 列：分類「${category}」不存在`);seen.add(sku);valid.push({sku,name,category,series:obj.series||'',keywords:obj.keywords||'',specification:obj.specification||'',internal_note:obj.internal_note||''})});const badLines=new Set(issues.map(x=>Number(x.match(/第 (\d+) 列/)?.[1])).filter(Number.isFinite));return {rows:valid,issues,count:rows.length,valid:rows.length-badLines.size}}
 async function requireAdmin(request,env){if(!sameOrigin(request))return null;if(!['GET','HEAD','OPTIONS'].includes(request.method)&&!request.headers.get('Origin'))return null;return await getSession(request,env)}
@@ -62,7 +63,7 @@ function validateBackup(data){
   if(im.type==='image/jpeg'&&!(bytes[0]===255&&bytes[1]===216&&bytes[2]===255))throw Error('備份照片 JPEG 格式錯誤：'+im.key);
   if(im.type==='image/png'&&!(bytes[0]===137&&bytes[1]===80&&bytes[2]===78&&bytes[3]===71))throw Error('備份照片 PNG 格式錯誤：'+im.key);
   if(im.type==='image/webp'&&!(bytes[0]===82&&bytes[1]===73&&bytes[2]===70&&bytes[3]===70&&bytes[8]===87&&bytes[9]===69&&bytes[10]===66&&bytes[11]===80))throw Error('備份照片 WebP 格式錯誤：'+im.key);
-  if(im.key.startsWith('public/')&&im.type!=='image/webp')throw Error('展示照片必須為 WebP：'+im.key)
+  if(im.key.startsWith('public/')&&!['image/webp','image/jpeg'].includes(im.type))throw Error('展示照片必須為 WebP 或 JPEG：'+im.key)
  }
  for(const row of data.tables.published_media){
   if(typeof row?.image_key!=='string'||!keys.has(row.image_key))throw Error('備份缺少已發布照片檔案');
@@ -385,12 +386,12 @@ export default {async fetch(request,env){if(!env.IMAGES&&env.DB)env={...env,IMAG
    const prior=await env.DB.prepare('SELECT product_id FROM photo_upload_requests WHERE token=?').bind(token).first();if(prior)return prior.product_id===pid?json({ok:true,uploaded:1,duplicateRequest:true}):fail('上傳識別碼已被其他產品使用',409);
    const product=await env.DB.prepare('SELECT id FROM products WHERE id=?').bind(pid).first();if(!product)return fail('找不到產品',404);
    const count=await env.DB.prepare('SELECT COUNT(*) AS n FROM product_images WHERE product_id=?').bind(pid).first();if((count?.n||0)>=5)return fail('每款產品最多 5 張展示照片，請先移除舊照片',409);
-   if(!['image/jpeg','image/png','image/webp'].includes(o.type)||d.type!=='image/webp'||t.type!=='image/webp')return fail('僅支援 JPG、PNG、WebP，展示圖必須為 WebP');
+   if(!['image/jpeg','image/png','image/webp'].includes(o.type)||!['image/webp','image/jpeg'].includes(d.type)||!['image/webp','image/jpeg'].includes(t.type))return fail('僅支援 JPG、PNG、WebP，展示圖必須為 WebP 或 JPEG');
    if(!o.size||!d.size||!t.size)return fail('照片檔案不可為空白',400);if(o.size+d.size+t.size>3*1024*1024)return fail('免費測試版單次照片總量不可超過 3 MiB',413);if(o.size>512*1024||d.size>512*1024||t.size>512*1024)return fail('免費測試版每張原圖、展示圖及縮圖都不可超過 512 KiB，請先壓縮照片',413);
-   if(!await validImage(o,o.type)||!await validImage(d,'image/webp')||!await validImage(t,'image/webp'))return fail('照片內容與檔案格式不符或檔案已損毀');
-   const id=crypto.randomUUID(),ext=o.type==='image/png'?'png':(o.type==='image/webp'?'webp':'jpg'),okey=`private/originals/${pid}/${id}.${ext}`,dkey=`public/display/${pid}/${id}.webp`,tkey=`public/thumb/${pid}/${id}.webp`;
+   if(!await validImage(o,o.type)||!await validImage(d,d.type)||!await validImage(t,t.type))return fail('照片內容與檔案格式不符或檔案已損毀');
+   const id=crypto.randomUUID(),ext=o.type==='image/png'?'png':(o.type==='image/webp'?'webp':'jpg'),okey=`private/originals/${pid}/${id}.${ext}`,dkey=`public/display/${pid}/${id}.${d.type==='image/jpeg'?'jpg':'webp'}`,tkey=`public/thumb/${pid}/${id}.${t.type==='image/jpeg'?'jpg':'webp'}`;
    try{
-    await env.IMAGES.put(okey,o.stream(),{httpMetadata:{contentType:o.type}});await env.IMAGES.put(dkey,d.stream(),{httpMetadata:{contentType:'image/webp',cacheControl:'public, max-age=31536000, immutable'}});await env.IMAGES.put(tkey,t.stream(),{httpMetadata:{contentType:'image/webp',cacheControl:'public, max-age=31536000, immutable'}});
+    await env.IMAGES.put(okey,o.stream(),{httpMetadata:{contentType:o.type}});await env.IMAGES.put(dkey,d.stream(),{httpMetadata:{contentType:d.type,cacheControl:'public, max-age=31536000, immutable'}});await env.IMAGES.put(tkey,t.stream(),{httpMetadata:{contentType:t.type,cacheControl:'public, max-age=31536000, immutable'}});
     const [inserted]=await env.DB.batch([
      env.DB.prepare(`INSERT INTO product_images(product_id,original_key,display_key,thumb_key,image_hash,sort_order,is_cover)
       SELECT ?,?,?,?,'',COALESCE(MAX(sort_order)+1,0),COUNT(*)=0
@@ -415,19 +416,19 @@ export default {async fetch(request,env){if(!env.IMAGES&&env.DB)env={...env,IMAG
    const {results=[]}=await env.DB.prepare('SELECT id,sort_order,is_cover,alt_text,original_key,display_key,thumb_key FROM product_images WHERE product_id=? ORDER BY sort_order,id').bind(pid).all();
    return json({images:results.map(x=>({id:x.id,sort_order:x.sort_order,is_cover:!!x.is_cover,alt_text:x.alt_text,preview:`/api/admin/images/${x.id}/preview`,original:`/api/admin/images/${x.id}/original`}))});
   }
-  const publishPhotoMatch=path.match(/^\/api\/admin\/publish\/photo\/(public\/thumb\/[A-Za-z0-9/_-]+\.webp)$/);
+  const publishPhotoMatch=path.match(/^\/api\/admin\/publish\/photo\/(public\/thumb\/[A-Za-z0-9/_-]+\.(?:webp|jpg))$/);
   if(publishPhotoMatch&&method==='GET'){
    if(!await requireAdmin(request,env))return fail('Unauthorized',401);
    const photo=await env.IMAGES?.get(publishPhotoMatch[1]);
    if(!photo)return fail('找不到照片',404);
-   return new Response(photo.body,{headers:{'content-type':'image/webp','cache-control':'private, no-store'}});
+   return new Response(photo.body,{headers:{'content-type':photoContentType(publishPhotoMatch[1]),'cache-control':'private, no-store'}});
   }
   const previewMatch=path.match(/^\/api\/admin\/images\/(\d+)\/preview$/);
   if(previewMatch&&method==='GET'){
    if(!await requireAdmin(request,env))return fail('Unauthorized',401);
    const row=await env.DB.prepare('SELECT thumb_key FROM product_images WHERE id=?').bind(Number(previewMatch[1])).first();if(!row)return fail('找不到照片',404);
    const obj=await env.IMAGES.get(row.thumb_key);if(!obj)return fail('照片檔案不存在',404);
-   return new Response(obj.body,{headers:{'content-type':'image/webp','cache-control':'private, no-store'}});
+   return new Response(obj.body,{headers:{'content-type':photoContentType(row.thumb_key),'cache-control':'private, no-store'}});
   }
   const reorderMatch=path.match(/^\/api\/admin\/products\/(\d+)\/images\/reorder$/);
   if(reorderMatch&&method==='POST'){
@@ -455,7 +456,7 @@ export default {async fetch(request,env){if(!env.IMAGES&&env.DB)env={...env,IMAG
    await env.DB.prepare(`INSERT INTO audit_log(action,entity_type,entity_id,details) VALUES('delete_image','product',?,'刪除產品照片')`).bind(String(row.product_id)).run();return json({ok:true});
   }
   const originalMatch=path.match(/^\/api\/admin\/images\/(\d+)\/original$/);if(originalMatch&&method==='GET'){if(!await requireAdmin(request,env))return fail('Unauthorized',401);const row=await env.DB.prepare('SELECT original_key FROM product_images WHERE id=?').bind(Number(originalMatch[1])).first();if(!row)return fail('找不到原始照片',404);const obj=await env.IMAGES.get(row.original_key);if(!obj)return fail('原始照片不存在',404);return new Response(obj.body,{headers:{'content-type':obj.httpMetadata?.contentType||'application/octet-stream','cache-control':'private, no-store','content-disposition':'attachment'}})}
-  const mediaMatch=path.match(/^\/media\/(public\/(?:display|thumb)\/[A-Za-z0-9/_-]+\.webp)$/);if(mediaMatch&&method==='GET'){const key=mediaMatch[1];const row=await env.DB.prepare(`SELECT image_key FROM published_media WHERE image_key=? LIMIT 1`).bind(key).first();if(!row)return new Response('Not found',{status:404});const obj=await env.IMAGES.get(key);if(!obj)return new Response('Not found',{status:404});return new Response(obj.body,{headers:{'content-type':'image/webp','cache-control':'public, no-cache','etag':obj.httpEtag||''}})}
+  const mediaMatch=path.match(/^\/media\/(public\/(?:display|thumb)\/[A-Za-z0-9/_-]+\.(?:webp|jpg))$/);if(mediaMatch&&method==='GET'){const key=mediaMatch[1];const row=await env.DB.prepare(`SELECT image_key FROM published_media WHERE image_key=? LIMIT 1`).bind(key).first();if(!row)return new Response('Not found',{status:404});const obj=await env.IMAGES.get(key);if(!obj)return new Response('Not found',{status:404});return new Response(obj.body,{headers:{'content-type':photoContentType(key),'cache-control':'public, no-cache','etag':obj.httpEtag||''}})}
   if(path==='/api/admin/categories'&&method==='POST'){if(!await requireAdmin(request,env))return fail('Unauthorized',401);const b=await body(request),name=b?.name?.trim();if(!name)return fail('分類名稱必填');try{await env.DB.prepare('INSERT INTO categories(name) VALUES(?)').bind(name).run();return json({ok:true},201)}catch{return fail('分類名稱已存在',409)}}
   if(path==='/catalog/settings.json'&&method==='GET'){const row=await env.DB.prepare('SELECT payload_json FROM published_catalog WHERE id=1').first();let settings={};try{settings=JSON.parse(row?.payload_json||'{}').settings||{}}catch{}const safe={};for(const k of ['site_name','site_description','brand_color','contact_text','contact_url','logo_url','noindex'])if(typeof settings[k]==='string')safe[k]=settings[k];return json(safe,200,{'cache-control':'public, max-age=60','x-robots-tag':'noindex'});}
   if(path==='/catalog/products.json'&&method==='GET'){const row=await env.DB.prepare('SELECT payload_json FROM published_catalog WHERE id=1').first();let products=[];try{products=JSON.parse(row?.payload_json||'{"products":[]}').products||[]}catch{}products=products.map(p=>({sku:p.sku,name:p.name,series:p.series,keywords:p.keywords,category:p.category,specification:p.specification,images:(p.images||[]).map(im=>({src:im.src,thumb:im.thumb,alt:im.alt}))}));return json(products,200,{'cache-control':'public, max-age=60','x-robots-tag':'noindex'});}
