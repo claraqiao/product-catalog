@@ -119,11 +119,11 @@ if(!deletion.includes('await refreshImages()')||deletion.includes('await load()'
 console.log('PASS photo deletion keeps pending upload selections and updates product photo count');
 
 const uploadGuard=admin.slice(admin.indexOf("$('#photoUpload').addEventListener('click'"),admin.indexOf('const batch=[...chosen]',admin.indexOf("$('#photoUpload').addEventListener('click'")));
-if(!uploadGuard.includes('await refreshImages()')||!uploadGuard.includes('currentImages.length+chosen.length>5')||!uploadGuard.includes('無法確認目前照片數量'))throw Error('Photo upload must verify fresh gallery count and fail closed');
+if(!uploadGuard.includes('await refreshImages()')||!uploadGuard.includes('currentImages.length+chosen.filter(file=>!uploadTokens.has(file)).length>5')||!uploadGuard.includes('無法確認目前照片數量'))throw Error('Photo upload must verify fresh gallery count and fail closed');
 console.log('PASS photo upload checks fresh gallery count and blocks when gallery cannot load');
 
 const batchStart=admin.slice(admin.indexOf("$('#photoUpload').addEventListener('click'"),admin.indexOf('const batch=[...chosen]',admin.indexOf("$('#photoUpload').addEventListener('click'")));
-if(!batchStart.includes("photoBatchPending=true;btn.disabled=true;select.disabled=true;$('#photoFiles').disabled=true;try{const fresh=await refreshImages()")||!batchStart.includes('||btn.disabled||galleryMutationPending||photoBatchPending)return')||!batchStart.includes("btn.disabled=false;select.disabled=false;$('#photoFiles').disabled=false;photoBatchPending=false;return"))throw Error('Photo batch must lock before asynchronous gallery check and unlock on validation failure');
+if(!batchStart.includes("photoBatchPending=uploadingPhotos=true;btn.disabled=true;select.disabled=true;$('#photoFiles').disabled=true;try{const fresh=await refreshImages()")||!batchStart.includes('||btn.disabled||galleryMutationPending||photoBatchPending)return')||!batchStart.includes("btn.disabled=false;select.disabled=false;$('#photoFiles').disabled=false;photoBatchPending=uploadingPhotos=false;return"))throw Error('Photo batch must lock before asynchronous gallery check and unlock on validation failure');
 console.log('PASS photo upload prevents duplicate submissions during capacity checks');
 
 const photoBatchLock=admin.slice(admin.indexOf("$('#photoUpload').addEventListener('click'"),admin.indexOf('async function decodePhoto(file)'));
@@ -154,7 +154,7 @@ console.log('PASS gallery reorder and delete operations serialize concurrent edi
 
 const concurrentPhotoOps=admin.slice(admin.indexOf('let chosen=[],currentImages=[]'),admin.indexOf('async function decodePhoto(file)'));
 if(!concurrentPhotoOps.includes('photoBatchPending=false')||concurrentPhotoOps.split('galleryMutationPending||photoBatchPending').length<4)throw Error('Photo mutations and uploads must not overlap');
-if(!concurrentPhotoOps.includes("btn.disabled=false;select.disabled=false;$('#photoFiles').disabled=false;photoBatchPending=false;return"))throw Error('Photo batch lock must release on early validation failure');
+if(!concurrentPhotoOps.includes("btn.disabled=false;select.disabled=false;$('#photoFiles').disabled=false;photoBatchPending=uploadingPhotos=false;return"))throw Error('Photo batch lock must release on early validation failure');
 console.log('PASS photo upload and gallery mutations cannot overlap and early validation unlocks');
 
 const productSwitch=admin.slice(admin.indexOf("select.addEventListener('change',()=>{currentImages=[]"),admin.indexOf("$('#photoFiles').addEventListener('change'"));
@@ -212,7 +212,7 @@ for(const warning of ['18 MiB','800 張照片','還原功能也尚未完成','�
 console.log('PASS backup page discloses trial limits and missing restore');
 
 const uploadBatchBody=admin.slice(admin.indexOf('const batch=[...chosen],failed=[]'),admin.indexOf('if(select.value)refreshImages()',admin.indexOf('const batch=[...chosen],failed=[]')));
-if(!uploadBatchBody.includes('finally{select.disabled=false;')||!uploadBatchBody.includes('photoBatchPending=false;}')||!uploadBatchBody.includes('批次上傳處理中斷'))throw Error('Upload controls must recover after unexpected batch error');
+if(!uploadBatchBody.includes('finally{select.disabled=false;')||!uploadBatchBody.includes('photoBatchPending=uploadingPhotos=false;}')||!uploadBatchBody.includes('批次上傳處理中斷'))throw Error('Upload controls must recover after unexpected batch error');
 console.log('PASS photo upload controls recover after unexpected error');
 
 const bootstrapHandler=admin.slice(admin.indexOf('async function load()'),admin.indexOf('function showLogin()'));
