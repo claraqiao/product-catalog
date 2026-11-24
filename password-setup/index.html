@@ -1,1 +1,44 @@
-<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>管理密碼設定工具</title><style>body{font-family:system-ui,-apple-system,sans-serif;background:#f5f7f5;color:#20372f;margin:0;padding:24px}.card{max-width:620px;margin:35px auto;background:white;border-radius:18px;padding:26px;box-shadow:0 4px 24px #0001}input,textarea,button{box-sizing:border-box;width:100%;padding:14px;font-size:17px;border-radius:9px;margin:10px 0;border:1px solid #bccbc3}button{background:#285c49;color:white;border:0;font-weight:bold}textarea{height:130px;overflow-wrap:anywhere}small{color:#59685f}#result{display:none}</style></head><body><main class="card"><h2>管理員密碼設定</h2><p>這個工具只在你的裝置上計算密碼雜湊值，不會傳送密碼到伺服器。請使用自己設定的密碼。</p><label for="pw">輸入你的管理密碼</label><input id="pw" type="password" autocomplete="new-password" minlength="12" placeholder="至少 12 個字元"><button id="make">產生密碼雜湊值</button><p id="status" role="status"></p><div id="result"><label for="hash">複製以下整段，貼到 Cloudflare 的 ADMIN_PASSWORD_HASH 值欄位</label><textarea id="hash" readonly></textarea><button id="copy">複製雜湊值</button><p><small>請在 Cloudflare 將 ADMIN_PASSWORD_HASH 設為 Secret。這裡顯示的是雜湊值，不是原始密碼。</small></p></div></main><script>const $=id=>document.getElementById(id);function b64url(bytes){let s='';for(const b of bytes)s+=String.fromCharCode(b);return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')} $('make').onclick=async()=>{const password=$('pw').value;if(password.length<12){$('status').textContent='請使用至少 12 個字元的密碼';return}if(!crypto?.subtle){$('status').textContent='此瀏覽器不支援安全加密，請改用 Safari 的 HTTPS 網址';return}$('status').textContent='計算中，請稍候…';$('result').style.display='none';try{const salt=crypto.getRandomValues(new Uint8Array(16));const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(password),'PBKDF2',false,['deriveBits']);const bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt,iterations:310000,hash:'SHA-256'},key,256);$('hash').value=b64url(salt)+'.'+b64url(new Uint8Array(bits));$('pw').value='';$('result').style.display='block';$('status').textContent='完成！請複製下方雜湊值。'}catch(e){$('status').textContent='產生失敗，請重新嘗試'}};$('copy').onclick=async()=>{const t=$('hash');try{await navigator.clipboard.writeText(t.value);$('status').textContent='已複製，現在可以貼到 Cloudflare'}catch{t.focus();t.select();$('status').textContent='請點選「拷貝」複製選取的文字'}};</script></body></html>
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>管理密碼設定工具</title><style>body{font-family:system-ui,-apple-system,sans-serif;background:#f5f7f5;color:#20372f;margin:0;padding:24px}.card{max-width:620px;margin:35px auto;background:white;border-radius:18px;padding:26px;box-shadow:0 4px 24px #0001}input,textarea,button{box-sizing:border-box;width:100%;padding:14px;font-size:17px;border-radius:9px;margin:10px 0;border:1px solid #bccbc3}button{background:#285c49;color:white;border:0;font-weight:bold}textarea{height:130px;overflow-wrap:anywhere}small{color:#59685f}#result{display:none}</style></head><body><main class="card"><h2>管理員密碼設定</h2>
+<p>這個工具會在你的裝置上隨機產生新的管理密碼和雜湊值。請先把新密碼存到「密碼」App，登入後台時會用到。</p>
+<button id="make">產生新管理密碼</button>
+<p id="status" role="status"></p>
+<div id="result">
+<label for="pw">新密碼（用來登入商品後台）</label>
+<input id="pw" type="text" readonly autocomplete="off" spellcheck="false">
+<button id="copyPassword">複製新密碼</button>
+<label for="hash">雜湊值（貼到 Cloudflare 的 ADMIN_PASSWORD_HASH）</label>
+<textarea id="hash" readonly spellcheck="false"></textarea>
+<button id="copy">複製雜湊值</button>
+</div></main>
+<script>
+const $=id=>document.getElementById(id);
+function b64url(bytes){
+ return btoa(String.fromCharCode(...bytes)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+$('make').onclick=async()=>{
+ $('result').style.display='none';
+ try{
+  const password=b64url(crypto.getRandomValues(new Uint8Array(24)));
+  const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(password));
+  $('pw').value=password;
+  $('hash').value='v2.'+b64url(new Uint8Array(digest));
+  $('result').style.display='block';
+  $('status').textContent='請先保存新密碼，再複製雜湊值。';
+ }catch{
+  $('status').textContent='產生失敗，請使用 Safari 開啟這個 HTTPS 網址。';
+ }
+};
+async function copy(id,message){
+ const field=$(id);
+ try{
+  await navigator.clipboard.writeText(field.value);
+  $('status').textContent=message;
+ }catch{
+  field.focus();
+  field.select();
+  $('status').textContent='請點選「拷貝」複製已選取的文字。';
+ }
+}
+$('copyPassword').onclick=()=>copy('pw','新密碼已複製，請先儲存。');
+$('copy').onclick=()=>copy('hash','雜湊值已複製，可以貼到 Cloudflare。');
+</script></body></html>
